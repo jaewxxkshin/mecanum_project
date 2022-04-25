@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosconsole
   diagnostic_updater
   urdf
+  rospy
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
@@ -46,6 +47,11 @@ catkin_package(
 ###########
 ## Build ##
 ###########
+include_directories(
+# include
+  ${catkin_INCLUDE_DIRS}
+)
+
 add_library(nexus_ros_force_based_move src/nexus_ros_force_based_move.cpp) 
 target_link_libraries(nexus_ros_force_based_move ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES})
 
@@ -53,6 +59,10 @@ target_link_libraries(nexus_ros_force_based_move ${Boost_LIBRARIES} ${GAZEBO_LIB
 add_library(realsense_gazebo_plugin src/RealSensePlugin.cpp src/gazebo_ros_realsense.cpp)
 target_link_libraries(realsense_gazebo_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 add_dependencies(realsense_gazebo_plugin ${catkin_EXPORTED_TARGETS})
+
+catkin_install_python(PROGRAMS src/line_tracer.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 # add_dependencies(nexus_ros_force_based_move ${catkin_EXPORTED_TARGETS})
 
