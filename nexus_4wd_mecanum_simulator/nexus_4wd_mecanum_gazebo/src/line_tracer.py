@@ -12,7 +12,7 @@ import roslib
 import sys
 import rospy
 import cv2
-import numpy
+import numpy as np
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
@@ -58,22 +58,36 @@ class LineFollower:
                 height, width, channels = cv_image.shape
                 #print (cv_image.shape)
                 #Crop image to only see 100 rows
-                descentre = 160
+                descentre = 200
                 rows_to_watch = 100
-                crop_img = cv_image[(height)/2+descentre: (height)/2+(descentre+rows_to_watch)][1:width]
-                #print (crop_img.shape)
+                crop_img = cv_image[(height)/2+descentre: (height)][1:width]
+                print (crop_img.shape)
 
                 #### 2.GET IMAGE INFO AND CROP ####
                 hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)
                 #the follow values are pure guesses based on other code
-                lower_yellow = numpy.array([ 100, 100, 100])
-                upper_yellow = numpy.array([ 140, 255, 250])
+                lower_yellow = np.array([ -10, 100, 100])
+                upper_yellow = np.array([ 10, 255, 250])
 
                 #### 3.APPLY THE MASK ####
                 mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
                 res = cv2.bitwise_and(crop_img,crop_img,mask= mask)
 
-                #### 4.GET THE CENTROIDS, DRAW A CIRCLE ####
+                #### 4.Detect Line in the MASK####
+		# edge = cv2.Canny(res, 50, 150, 3)
+		# mask2 = crop_img.copy()
+		# minLineLength = 100
+                # maxLineGap = 0
+                # sum_x, mean_x = 0,0
+                # lines = cv2.HoughLinesP(edge, 1, np.pi/180, 50, minLineLength, maxLineGap)
+                # if lines is None:
+                #         print("no line detected")
+                # for i, line in enumerate(lines):
+                #         x1,y1,x2,y2 = line[0]
+                #         cv2.line(mask2,(x1,y1),(x2,y2),(255,0,0),3)
+                #         sum_x += (x1 + x2)
+                # mean_x = int(sum_x /(lines.shape[0]*2))
+                # cv2.circle(mask2, (mean_x, 40), 10,(0,0,255), -1)
                 m = cv2.moments(mask, False)
                 try:
                         cx = m['m10']/m['m00']
@@ -86,17 +100,20 @@ class LineFollower:
 
                 #Open a GUI, where you can see the contents of each image
                 cv2.imshow("Original Image", cv_image)
-                cv2.imshow("Cropped Image", crop_img)
-                cv2.imshow("HSV Image", hsv)
+                #cv2.imshow("Cropped Image", crop_img)
+                #cv2.imshow("HSV Image", hsv)
                 cv2.imshow("Mask", res)
+		#cv2.imshow("edge", edge)
+                #cv2.imshow("line", mask2)
                 cv2.waitKey(1)
 
-                #### 5. MOVE TURTLEBOT BASED ON POISTION OF CENTROID ####
+                #### 5. MOVE TURTLEBOT BASED ON Detected Line ####
                 error_x = cx - width / 2
-                self.twist_object.linear.x = 0.1
-                self.twist_object.angular.z = -error_x / 500
+                self.twist_object.linear.x = 0.3
+                self.twist_object.angular.z = -error_x / 1700
                 rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
                 self.cmd_vel_pub.publish(self.twist_object)
+                
 
 
 def main():
