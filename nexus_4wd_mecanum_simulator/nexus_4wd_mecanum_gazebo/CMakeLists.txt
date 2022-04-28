@@ -60,9 +60,6 @@ add_library(realsense_gazebo_plugin src/RealSensePlugin.cpp src/gazebo_ros_reals
 target_link_libraries(realsense_gazebo_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 add_dependencies(realsense_gazebo_plugin ${catkin_EXPORTED_TARGETS})
 
-catkin_install_python(PROGRAMS src/line_tracer.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
 
 # add_dependencies(nexus_ros_force_based_move ${catkin_EXPORTED_TARGETS})
 
@@ -90,6 +87,10 @@ install(DIRECTORY meshes
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
+# src/line_tracer.py
+catkin_install_python(PROGRAMS src/corner_test.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 
 #############

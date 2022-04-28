@@ -6,10 +6,10 @@
       <shadows>0</shadows>
       <grid>0</grid>
       <background>0.7 0.7 0.7 1</background>
-    </scene>    
+    </scene>
     <include>
       <uri>model://sun</uri>
-    </include>
+    </include>    
     <model name="ground">
       <pose>4.3 -0.05 -.1 0 0 0</pose>
       <static>1</static>

@@ -47,7 +47,6 @@ class LineFollower:
 
 
         def camera_callback(self, data):
-
                 try:
                         cv_image = self.bridge_object.imgmsg_to_cv2(data,desired_encoding="bgr8")
                 except CvBridgeError as e:
@@ -61,6 +60,7 @@ class LineFollower:
                 descentre = 200
                 rows_to_watch = 100
                 crop_img = cv_image[(height)/2+descentre: (height)][1:width]
+                gray_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
                 print (crop_img.shape)
 
                 #### 2.GET IMAGE INFO AND CROP ####
@@ -97,6 +97,8 @@ class LineFollower:
                         cy = height/2
 
                 cv2.circle(res, (int(cx), int(cy)), 10,(0,0,255), -1)
+  
+                print(cx)
 
                 #Open a GUI, where you can see the contents of each image
                 cv2.imshow("Original Image", cv_image)
@@ -108,11 +110,12 @@ class LineFollower:
                 cv2.waitKey(1)
 
                 #### 5. MOVE TURTLEBOT BASED ON Detected Line ####
-                error_x = cx - width / 2
-                self.twist_object.linear.x = 0.3
-                self.twist_object.angular.z = -error_x / 1700
-                rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
-                self.cmd_vel_pub.publish(self.twist_object)
+                #error_x = cx - width / 2
+                #self.twist_object.linear.x = 0.3
+                #print(error_x)
+                #self.twist_object.angular.z = -error_x / 1000
+                #rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
+                #self.cmd_vel_pub.publish(self.twist_object)
                 
 
 
