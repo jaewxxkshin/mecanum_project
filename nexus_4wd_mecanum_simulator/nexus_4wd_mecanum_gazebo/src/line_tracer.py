@@ -109,13 +109,13 @@ class LineFollower:
                 #cv2.imshow("line", mask2)
                 cv2.waitKey(1)
 
-                #### 5. MOVE TURTLEBOT BASED ON Detected Line ####
-                #error_x = cx - width / 2
-                #self.twist_object.linear.x = 0.3
-                #print(error_x)
-                #self.twist_object.angular.z = -error_x / 1000
-                #rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
-                #self.cmd_vel_pub.publish(self.twist_object)
+                ### 5. MOVE TURTLEBOT BASED ON Detected Line ####
+                error_x = cx - width / 2
+                self.twist_object.linear.x = 0.3
+                print(error_x)
+                self.twist_object.angular.z = -error_x / 1000
+                rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
+                self.cmd_vel_pub.publish(self.twist_object)
                 
 
 

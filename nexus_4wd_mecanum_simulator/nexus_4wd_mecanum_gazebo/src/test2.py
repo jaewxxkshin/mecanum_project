@@ -72,10 +72,17 @@ class LineFollower:
                     cv2.line(img_bin,(x1,y1),(x2,y2),(255,255,255),1)
                 img_bin = np.uint8(img_bin)
                 ret, labels, stats, centroids = cv2.connectedComponentsWithStats(img_bin)
+
                 sum_x = 0
+
+                print (centroids)
+                img_bin2 = np.zeros_like(gray)
+
+
                 size = len(centroids)
                 for i in range(1, size):
                     sum_x += centroids[i][0]
+                    cv2.circle(img_bin2, (int(centroids[i][0]), int(centroids[i][1])), 10,255, -1)
                 mean_x = sum_x / (size - 1)
                 print(mean_x)
                 cv2.circle(img_bin, (int(mean_x), int(cy/2)), 10,255, -1)
@@ -83,14 +90,15 @@ class LineFollower:
                 cv2.imshow('line', img_bin)
                 cv2.imshow('edge',canny)
                 cv2.imshow('original',img)
+                cv2.imshow('centroids',img_bin2)
                 cv2.waitKey(1)
 
-                #### 5. MOVE TURTLEBOT BASED ON Detected Line ####
-                #error_x = mean_x - width / 2
-                #self.twist_object.linear.x = 0.3
-                #self.twist_object.angular.z = -error_x / 1000
-                #rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
-                #self.cmd_vel_pub.publish(self.twist_object)
+                ### 5. MOVE TURTLEBOT BASED ON Detected Line ####
+                error_x = mean_x - width / 2
+                self.twist_object.linear.x = 0.3
+                self.twist_object.angular.z = -error_x / 1000
+                rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
+                self.cmd_vel_pub.publish(self.twist_object)
                 
                 
 
