@@ -54,9 +54,8 @@ class LineFollower:
                 lower_red = np.array([ -10, 100, 100])
                 upper_red = np.array([ 10, 255, 255])
                 mask = cv2.inRange(hsv, lower_red, upper_red)
-               
                 blured = cv2.GaussianBlur(mask, (3, 3), 0)
-                canny = cv2.Canny(mask, 70, 210)
+                canny = cv2.Canny(blured, 70, 210)
                 lines = cv2.HoughLines(canny, 1, np.pi/180, 30)
                 for line in lines: 
                     rho, theta = line[0]
