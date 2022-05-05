@@ -53,29 +53,28 @@ class LineFollower:
                 
                 #======================================================================================
                 # Bird_eye_view
-                src1 = np.float32([[0,height],[width,height],[width/2-20,240],[width/2+20,240]])
-                dst1 = np.float32([[width/2-20,height],[width/2+20,height],[width/2-20,0],[width/2+20,0]])
+                src = np.float32([[0,height],[width,height],[width/2-20,height/2],[width/2+20,height/2]])
+                dst = np.float32([[width/2-20,height],[width/2+20,height],[width/2-20,0],[width/2+20,0]])
                 #======================================================================================
 
-                M1 = cv2.getPerspectiveTransform(src1,dst1)
-                warped_img = cv2.warpPerspective(img, M1, (width,height)) # Image warping
+                M = cv2.getPerspectiveTransform(src,dst)
+                warped_img = cv2.warpPerspective(img, M, (width,height)) # Image warping
                 
                 #cv2.imshow('warped_img',warped_img)
                 lower_red = np.array([ -10, 100, 100])
                 upper_red = np.array([ 10, 255, 255])
                 #======================================================================================
-                gray_bev = gray = cv2.cvtColor(warped_img, cv2.COLOR_BGR2GRAY)
+                gray_bev  = cv2.cvtColor(warped_img, cv2.COLOR_BGR2GRAY)
                 img_bin_bev =  np.zeros_like(gray_bev)
-                img_bin_bev2 =  np.zeros_like(gray_bev)
                 hsv_bev = cv2.cvtColor(warped_img, cv2.COLOR_BGR2HSV)
                 mask_bev = cv2.inRange(hsv_bev, lower_red, upper_red)
                 blured_bev = cv2.GaussianBlur(mask_bev, (3, 3), 0)
-                canny_bev = cv2.Canny(blured_bev, 70, 210)
-                lines_bev_1 = cv2.HoughLines(canny_bev, 1, np.pi/180, 30)
+                canny_bev = cv2.Canny(blured_bev, 70, 210)  
                 #=======================================================================================
-                img_bin = np.zeros_like(gray)
-                #=======================================================================================
-                for line in lines_bev_1: 
+                #Houghlines
+                #======================================================================================
+                lines_bev = cv2.HoughLines(canny_bev, 1, np.pi/180, 30)
+                for line in lines_bev: 
                     rho, theta = line[0]
                     a = np.cos(theta)
                     b = np.sin(theta)
@@ -87,34 +86,31 @@ class LineFollower:
                     x2 = int(x0 - t*(-b))
                     y2 = int(y0 - t*(a))
                     cv2.line(img_bin_bev,(x1,y1),(x2,y2),(255,255,255),1)
-                #=======================================================================================
-                    
-                    
-                    #img_bin_bev = np.uint8(img_bin_bev)
-                    #ret, labels, stats, centroids = cv2.connectedComponentsWithStats(img_bin_bev)
+                #=======================================================================================                    
+                #img_bin_bev = np.uint8(img_bin_bev)
+                #ret, labels, stats, centroids = cv2.connectedComponentsWithStats(img_bin_bev)
                 #======================================================================================
-
+                # HoughLinesP 
                 #======================================================================================
-                # Hough Lines P 
                 # minLineLength = 10
                 # maxLineGap = 10
                 
-                # lines_bev_2 = cv2.HoughLinesP(canny_bev, 1, np.pi/180, 10, minLineLength,maxLineGap)
+                # lines_bev = cv2.HoughLinesP(canny_bev, 1, np.pi/180, 10, minLineLength,maxLineGap)
                 # if lines_bev_2 is not None:
-                #         for line in lines_bev_2:
+                #         for line in lines_bev:
                 #                 x1,y1,x2,y2 = line[0]
-                #                 cv2.line(img_bin_bev2,(x1,y1),(x2,y2),(255,255,255),1)
+                #                 cv2.line(img_bin_bev,(x1,y1),(x2,y2),(255,255,255),1)
 
                 #======================================================================================                
                 #cv2.imshow('canny_bev',canny_bev)
                 #cv2.imshow('original',img)
                 #cv2.imshow('line', img_bin_bev)
-                # cv2.imshow('linesP', img_bin_bev2)
+                # cv2.imshow('linesP', img_bin_bev)
                 cv2.waitKey(1)
                 #======================================================================================
                 #======================================================================================
                 roi = img[int(height/1.15) : height, 0 : width]
-                cy, cx, ch = img.shape
+                cy, cx, ch = roi.shape
                 gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
                 img_bin = np.zeros_like(gray)
                 hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
@@ -143,22 +139,25 @@ class LineFollower:
                 #=======================================================================================
                 sum_x = 0
 
-                # print (centroids)
                 img_bin2 = np.zeros_like(gray)
 
-
                 size = len(centroids)
+                
                 for i in range(1, size):
                     sum_x += centroids[i][0]
-                    cv2.circle(img_bin2, (int(centroids[i][0]), int(centroids[i][1])), 10,255, -1)
+                    #cv2.circle(img_bin2, (int(centroids[i][0]), int(centroids[i][1])), 10,255, -1)
                 mean_x = sum_x / (size - 1)
                 
-                # print(mean_x)
+                #print(mean_x)
                 cv2.circle(img_bin2, (int(mean_x), int(cy/2)), 10,255, -1)
-                cv2.circle(img_bin, (int(cx/2), int(cy/2)), 10,100, -1)
-                #cv2.imshow('line', img_bin)
-                #cv2.imshow('edge',canny)
-                #cv2.imshow('original',img)
+                cv2.circle(img_bin2, (int(cx/2), int(cy/2)), 10,100, -1)
+                cv2.imshow('hsv',hsv)
+                cv2.imshow('mask',mask)
+                cv2.imshow('blured',blured)
+                cv2.imshow('edge',canny)
+                cv2.imshow('edge',canny)
+                cv2.imshow('line', img_bin)
+                cv2.imshow('original',roi)
                 cv2.imshow('centroids',img_bin2)
                 #=======================================================================================
                 #moment
@@ -183,14 +182,12 @@ class LineFollower:
   
                 # print(cx)
                 # cv2.imshow("Mask", res)
-
-
-                cv2.waitKey(1)
+                # cv2.waitKey(1)
 
                 ### 5. MOVE TURTLEBOT BASED ON Detected Line ####
                 error_x = mean_x - width / 2
-                self.twist_object.linear.x = 0.3
-                self.twist_object.angular.z = -error_x / 1000
+                #self.twist_object.linear.x = 0.3
+                #self.twist_object.angular.z = -error_x / 1000
                 rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
                 self.cmd_vel_pub.publish(self.twist_object)
                 
