@@ -87,7 +87,7 @@ class LineFollower:
                     y2 = int(y0 - t*(a))
                     cv2.line(img_bin_bev,(x1,y1),(x2,y2),(255,255,255),1)
                 #=======================================================================================                    
-                #img_bin_bev = np.uint8(img_bin_bev)
+                img_bin_bev = np.uint8(img_bin_bev)
                 #ret, labels, stats, centroids = cv2.connectedComponentsWithStats(img_bin_bev)
                 #======================================================================================
                 # HoughLinesP 
@@ -104,9 +104,9 @@ class LineFollower:
                 #======================================================================================                
                 #cv2.imshow('canny_bev',canny_bev)
                 #cv2.imshow('original',img)
-                #cv2.imshow('line', img_bin_bev)
-                # cv2.imshow('linesP', img_bin_bev)
-                cv2.waitKey(1)
+                cv2.imshow('line', img_bin_bev)
+                #cv2.imshow('linesP', img_bin_bev)
+                #cv2.waitKey(1)
                 #======================================================================================
                 #======================================================================================
                 roi = img[int(height/1.15) : height, 0 : width]
@@ -149,16 +149,17 @@ class LineFollower:
                 mean_x = sum_x / (size - 1)
                 
                 #print(mean_x)
-                cv2.circle(img_bin2, (int(mean_x), int(cy/2)), 10,255, -1)
-                cv2.circle(img_bin2, (int(cx/2), int(cy/2)), 10,100, -1)
+                cv2.circle(img_bin, (int(mean_x), int(cy/2)), 10,255, -1)
+                cv2.circle(img_bin, (int(cx/2), int(cy/2)), 10,100, -1)
                 cv2.imshow('hsv',hsv)
-                cv2.imshow('mask',mask)
-                cv2.imshow('blured',blured)
-                cv2.imshow('edge',canny)
-                cv2.imshow('edge',canny)
+                # cv2.imshow('mask',mask)
+                # cv2.imshow('blured',blured)
+                # cv2.imshow('edge',canny)
+                # cv2.imshow('edge',canny)
                 cv2.imshow('line', img_bin)
-                cv2.imshow('original',roi)
-                cv2.imshow('centroids',img_bin2)
+                # cv2.imshow('original',roi)
+                # cv2.imshow('centroids',img_bin2)
+                cv2.waitKey(1)
                 #=======================================================================================
                 #moment
                 #=======================================================================================
@@ -186,8 +187,8 @@ class LineFollower:
 
                 ### 5. MOVE TURTLEBOT BASED ON Detected Line ####
                 error_x = mean_x - width / 2
-                #self.twist_object.linear.x = 0.3
-                #self.twist_object.angular.z = -error_x / 1000
+                self.twist_object.linear.x = 0.3
+                self.twist_object.angular.z = -error_x / 1000
                 rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
                 self.cmd_vel_pub.publish(self.twist_object)
                 
