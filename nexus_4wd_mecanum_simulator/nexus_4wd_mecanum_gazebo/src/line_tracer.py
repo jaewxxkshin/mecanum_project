@@ -59,12 +59,13 @@ class LineFollower:
                 #Crop image to only see 100 rows
                 descentre = 200
                 rows_to_watch = 100
-                crop_img = cv_image[(height)/2+descentre: (height)][1:width]
+                crop_img = cv_image[(height)/2 + 150: (height)/2 + 200][1:width]
                 gray_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-                print (crop_img.shape)
+                cv2.imshow('crop',crop_img)
 
                 #### 2.GET IMAGE INFO AND CROP ####
                 hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)
+                cv2.imshow('hsv', hsv)
                 #the follow values are pure guesses based on other code
                 lower_yellow = np.array([ -10, 100, 100])
                 upper_yellow = np.array([ 10, 255, 250])
@@ -95,8 +96,10 @@ class LineFollower:
                 except ZeroDivisionError:
                         cx = width/2
                         cy = height/2
-
+                my, mx, channels = res.shape
+                print(mx)
                 cv2.circle(res, (int(cx), int(cy)), 10,(0,0,255), -1)
+                cv2.circle(res, (int(mx/2), int(my/2)), 10, (255,0,0), -1)
   
                 print(cx)
 
@@ -110,12 +113,12 @@ class LineFollower:
                 cv2.waitKey(1)
 
                 ### 5. MOVE TURTLEBOT BASED ON Detected Line ####
-                error_x = cx - width / 2
-                self.twist_object.linear.x = 0.3
-                print(error_x)
-                self.twist_object.angular.z = -error_x / 1000
-                rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
-                self.cmd_vel_pub.publish(self.twist_object)
+                # error_x = cx - width / 2
+                # self.twist_object.linear.x = 0.3
+                # print(error_x)
+                # self.twist_object.angular.z = -error_x / 1000
+                # rospy.loginfo("Angular turning Value Sent = "+str(self.twist_object.angular.z))
+                # self.cmd_vel_pub.publish(self.twist_object)
                 
 
 
