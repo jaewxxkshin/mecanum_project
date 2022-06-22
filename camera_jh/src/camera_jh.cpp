@@ -6,6 +6,7 @@
 
 //using namespace cv;
 using namespace std;
+cv::Mat img_roi;
 
 int main(int argc, char **argv)
 {
@@ -46,6 +47,12 @@ int main(int argc, char **argv)
     cv::Mat dst;
     cv::Point2f src_p[4], dst_p[4];
 
+    //img_roi's shape = (560, 560)[W]
+    img_roi = src(cv::Rect(400, 160, 560, 560));
+    // cv::imwrite("output.png", img_roi);
+    cv::imwrite("original.png", src);
+
+
     src_p[0] = cv::Point2f(0, 0);
     src_p[1] = cv::Point2f(1280, 0);
     src_p[2] = cv::Point2f(0, 720);
@@ -56,15 +63,32 @@ int main(int argc, char **argv)
     dst_p[2] = cv::Point2f(0, 720);
     dst_p[3] = cv::Point2f(1280, 720);
 
+
     cv::Mat perspective_mat = cv::getPerspectiveTransform(src_p, dst_p);
 
     cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
     cv::imshow("src", src);
     cv::imshow("dst", dst);
+    
+
+    // color detect and binarization[W]
     ///////////////////////////////////////////////////
+    cv::Mat hsv,red_mask, red_image;
+	  cvtColor(img_roi, hsv, cv::COLOR_BGR2HSV);
+	  cv::Scalar lower_red = cv::Scalar(-10, 100, 100);
+	  cv::Scalar upper_red = cv::Scalar(10, 255, 255);
+	  inRange(hsv, lower_red, upper_red, red_mask);
+	  bitwise_and(img_roi, img_roi, red_image, red_mask);
+    cv::imshow("mask", red_mask);
+    ///////////////////////////////////////////////////
+
     if(cv::waitKey(10)==27) break;
     loop_rate.sleep();
     ros::spinOnce();
   }
+  //validation
+  cout <<"w: "<<img_roi.size().width<<endl;
+  cout <<"h: "<<img_roi.size().height<<endl;
+  //
   return 0;
 }
