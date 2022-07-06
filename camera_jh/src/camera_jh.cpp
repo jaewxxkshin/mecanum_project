@@ -1,8 +1,11 @@
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core.hpp>
 #include <librealsense2/rs.hpp>
 #include <iostream>
+#include <typeinfo>
+#include <vector>
 
 //using namespace cv;
 using namespace std;
@@ -90,6 +93,7 @@ int main(int argc, char **argv)
     cv::imshow("src", src);
     cv::imshow("dst", dst);
     cv::imwrite("kmeans.png", dst);
+
     // color detect and binarization[W]
     ///////////////////////////////////////////////////
     cv::Mat hsv,red_mask, red_image, gray, blur;
@@ -108,9 +112,102 @@ int main(int argc, char **argv)
     Canny(blur, edge, 10, 150);
     cv::imshow("edge", edge);
     countt=0;
+
+    // // 2022.07.06 kmeans first trial[W]
+    // // data reshape to examine kmeans algorithm
+    // cv::Mat data;
+    // cv::Mat flat_label;
+    // cv::Mat temp, res;
+    // data = dst.reshape( 3, dst.rows * dst.cols);
+    // data.convertTo (data, CV_32FC3);
+    // // just check[W]
+    // cout <<"shape: "<<data.size()<<data.channels()<<endl;;
+
+    // // kmeans algorithm[W]
+    // cv::Mat bestLabels, centers, clustered;
+    // int K = 8;
+    // cv::kmeans(data, K, bestLabels,
+    //         cv::TermCriteria( CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 10, 1.0),
+    //         20, cv::KMEANS_PP_CENTERS, centers);
+    // centers.convertTo (centers, CV_8UC3);
+    // flat_label = bestLabels.reshape(1, 1);
+    // // cout << flat_label <<endl;
+    // // cout <<"shape: "<<flat_label.size()<< flat_label.channels()<<endl;;
+    // //data = centers(flat_label);
+    // // cout << *typeid(centers).name() <<endl;
+    // for (int i = 0; i < flat_label.cols; i++)
+    // {
+    //   uchar idx = flat_label.at<uchar>(i);
+    //   uchar r = centers.at<Vec3b>(idx)[0];
+    
+    // }
+
+    // // 2022.07.06 kmeans second trial[W]
+    cv::Mat res, points, labels, centers;
+    int width, height, x, y, n, nPoints, cIndex, iTemp;
+    const int k = 8;
+     
+    // 이미지 정보 파악
+    width = dst.cols, height = dst.rows;
+    nPoints = width * height;
+ 
+    // 초기화
+    points.create(nPoints, 1, CV_32FC3);        // 입력 데이터
+    centers.create(k, 1, points.type());        // k개의 mean 결과값들
+    res.create(height, width, dst.type());      // 결과 영상
+
+    // kmeans 함수에 맞게 데이터 변환
+    for(y = 0, n = 0; y < height; y++)
+    {
+        for(x = 0; x < width; x++, n++)
+        {
+            points.at<cv::Vec3f>(n)[0] = dst.at<cv::Vec3b>(y, x)[0];
+            points.at<cv::Vec3f>(n)[1] = dst.at<cv::Vec3b>(y, x)[1];
+            points.at<cv::Vec3f>(n)[2] = dst.at<cv::Vec3b>(y, x)[2];
+        } 
+    }
+    // dst.convertTo (dst, CV_32FC3);
+    // k-means clustering
+    kmeans(points, k, labels, cv::TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 10, 1.0), 
+           20, cv::KMEANS_PP_CENTERS, centers);
+    std::cout << centers << std::endl;
+    // 클러스터링 결과물을 이미지로 보여주기 위한 변환
+    for(y = 0, n = 0; y < height; y++)
+    {
+        for(x = 0; x < width; x++, n++)
+        {
+            cIndex = labels.at<int>(n);
+            iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[0]);
+            iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
+            res.at<cv::Vec3b>(y, x)[0] = (uchar)iTemp;
+ 
+            iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[1]);
+            iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
+            res.at<cv::Vec3b>(y, x)[1] = (uchar)iTemp;
+ 
+            iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[2]);
+            iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
+            res.at<cv::Vec3b>(y, x)[2] = (uchar)iTemp;
+        } 
+    }
+   // after kmeans image generate, we need to arrange hsv space[W]
+
+   cv::imshow("Result", res); 
+
+   //convert HSV
+   
+   cv::cvtColor(res,hsv,cv::COLOR_BGR2HSV); 
+   cv::imshow("HSV", hsv); 
+   
+   // centers hsv convert [JH] 
+   
+
    }
     // image renewal preiod [W]
     countt++;
+    
+    
+    
   // jaeho's code
     // if(countt > 150)
     // {
