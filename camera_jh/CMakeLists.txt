@@ -128,8 +128,10 @@ include_directories(
 )
 
 add_executable(camera_jh src/camera_jh.cpp)
+add_executable(image_sample src/image_sample.cpp)
 #add_executable(camera_jh src/camera_jw.cpp)
 target_link_libraries(camera_jh ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${realsense2_LIBRARY})
+target_link_libraries(image_sample ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${realsense2_LIBRARY})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

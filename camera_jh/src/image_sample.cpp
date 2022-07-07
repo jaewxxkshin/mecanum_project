@@ -2,12 +2,14 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core.hpp>
-#include <librealsense2/rs.hpp>
+// #include <librealsense2/rs.hpp>
 #include <iostream>
 #include <typeinfo>
 #include <vector>
 #include <math.h>
 
+// // array for hsv msg
+// std_msgs::Int16MultiArray dst_hsv;
 
 //using namespace cv;
 using namespace std;
@@ -21,7 +23,11 @@ int countt  = 0;
 #define min_f(a, b, c)  (fminf(a, fminf(b, c)))
 #define max_f(a, b, c)  (fmaxf(a, fmaxf(b, c)))
 
-int rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b)
+#define Cluster_number 6 // [jh]
+
+int dst_hsv[3];
+
+void rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b)
 {
     float r = src_r / 255.0f;
     float g = src_g / 255.0f;
@@ -61,11 +67,15 @@ int rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned
     int dst_h = (unsigned int)(h / 2);   
     int dst_s = (unsigned int)(s * 255); 
     int dst_v = (unsigned int)(v * 255); 
+    dst_hsv[0] = dst_h;
+    dst_hsv[1] = dst_s;
+    dst_hsv[2] = dst_v;
+    // dst_hsv=dst_h,dst_s,dst_v;
 
-    cout << "h:" << dst_h << "s:" <<  dst_s << "v:"<< dst_v << endl;
-
-    return dst_h, dst_s, dst_v;
-   
+    // cout << "h:" << dst_h << "s:" <<  dst_s << "v:"<< dst_v << endl;
+    
+    // return dst_hsv;
+    return;
 }
 
 
@@ -78,20 +88,21 @@ int main(int argc, char **argv)
   cout << "Major version : "  << CV_MAJOR_VERSION << endl;
 
 
-  rs2::pipeline pipe;
-  rs2::config cfg;
-  rs2::frameset frames;
-  rs2::frame color_frame;
+//   rs2::pipeline pipe;
+//   rs2::config cfg;
+//   rs2::frameset frames;
+//   rs2::frame color_frame;
+  
 
   int rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b);
+  
+//   cfg.enable_stream(RS2_STREAM_COLOR, 1280,720, RS2_FORMAT_BGR8, 30);
+//   pipe.start(cfg);
 
-  cfg.enable_stream(RS2_STREAM_COLOR, 1280,720, RS2_FORMAT_BGR8, 30);
-  pipe.start(cfg);
-
-  for(int i=0; i < 30; i ++)
-  {
-    frames = pipe.wait_for_frames();
-  }
+//   for(int i=0; i < 30; i ++)
+//   {
+//     frames = pipe.wait_for_frames();
+//   }
 
   //cv::namedWindow("Display Imagee", cv::WINDOW_AUTOSIZE);
 
@@ -99,8 +110,8 @@ int main(int argc, char **argv)
 
   while(ros::ok())
   {
-    frames = pipe.wait_for_frames();
-    color_frame = frames.get_color_frame();
+    // frames = pipe.wait_for_frames();
+    // color_frame = frames.get_color_frame();
     cv::Mat dst;
     cv::Point2f src_p[4], dst_p[4];
     cout << "count : " << countt << endl;
@@ -142,18 +153,22 @@ int main(int argc, char **argv)
 
     //cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
   // jaewook's code 
-    if(countt== 0 || countt ==150)
-  { 
-    cv::Mat src(cv::Size(1280,720), CV_8UC3, (void*)color_frame.get_data(), cv::Mat::AUTO_STEP);
     
+    // cv::Mat src(cv::Size(1280,720), CV_8UC3, (void*)color_frame.get_data(), cv::Mat::AUTO_STEP);
+    cv::Mat src = cv::imread("original.png");
     cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
     cv::imshow("src", src);
     cv::imshow("dst", dst);
     
     //function test[k]
-    rgb2hsv(136,49,54);
-    //////////////////
+    // int dst_h = 0;
+    // int dst_s = 0;
+    // int dst_v = 0;
+    // dst_h,dst_s,dst_v= rgb2hsv(134,52,56);
+    // rgb2hsv(134,52,56);
 
+    //////////////////
+    
     // color detect and binarization[W]
     ///////////////////////////////////////////////////
     cv::Mat hsv,red_mask, red_image, gray, blur;
@@ -204,8 +219,8 @@ int main(int argc, char **argv)
 
     // // 2022.07.06 kmeans second trial[W]
     cv::Mat res, points, labels, centers;
-    int width, height, x, y, n, nPoints, cIndex, iTemp;
-    const int k = 8;
+    int width, height, x, y, n, nPoints, cIndex, iTemp,i;
+    const int k = Cluster_number;
      
     // 이미지 정보 파악
     width = dst.cols, height = dst.rows;
@@ -226,6 +241,8 @@ int main(int argc, char **argv)
             points.at<cv::Vec3f>(n)[2] = dst.at<cv::Vec3b>(y, x)[2];
         } 
     }
+
+
     // dst.convertTo (dst, CV_32FC3);
     // k-means clustering
     kmeans(points, k, labels, cv::TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 10, 1.0), 
@@ -250,10 +267,22 @@ int main(int argc, char **argv)
             res.at<cv::Vec3b>(y, x)[2] = (uchar)iTemp;
         } 
     }
+
+  for (i=0; i<Cluster_number; i++)
+  {
+    // rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
+    rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
+    // cout << "hsv : " << centers.at<cv::Vec3f>(i) << endl;
+    // cout << "h:" << dst_hsv[0] << " s:" <<  dst_hsv[1] << " v:"<< dst_hsv[2] << endl;
+    cout << "hsv : " << dst_hsv[0]<<","<<dst_hsv[1]<<","<<dst_hsv[2]<< endl;
+  }
+  dst_hsv[0]=0;
+  dst_hsv[1]=0;
+  dst_hsv[2]=0;
    // after kmeans image generate, we need to arrange hsv space[W]
 
    cv::imshow("Result", res); 
-  //  cv::imwrite("original.png", src);
+   cv::imwrite("kmeans.png", res);
 
    //convert HSV
    
@@ -263,7 +292,7 @@ int main(int argc, char **argv)
    // centers hsv convert [JH] 
    
 
-   }
+   
     // image renewal preiod [W]
     countt++;
     
