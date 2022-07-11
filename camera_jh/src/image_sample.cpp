@@ -7,9 +7,12 @@
 #include <typeinfo>
 #include <vector>
 #include <math.h>
+#include <std_msgs/Int16MultiArray.h>
 
 // // array for hsv msg
 // std_msgs::Int16MultiArray dst_hsv;
+
+std_msgs::Int16MultiArray dst_hsv;
 
 //using namespace cv;
 using namespace std;
@@ -25,7 +28,12 @@ int countt  = 0;
 
 #define Cluster_number 6 // [jh]
 
-int dst_hsv[3];
+int dst_hsv_for_msg[3];
+
+void set_array()
+{
+  dst_hsv.data.resize(3);
+}
 
 void rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b)
 {
@@ -67,9 +75,9 @@ void rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigne
     int dst_h = (unsigned int)(h / 2);   
     int dst_s = (unsigned int)(s * 255); 
     int dst_v = (unsigned int)(v * 255); 
-    dst_hsv[0] = dst_h;
-    dst_hsv[1] = dst_s;
-    dst_hsv[2] = dst_v;
+    dst_hsv_for_msg[0] = dst_h;
+    dst_hsv_for_msg[1] = dst_s;
+    dst_hsv_for_msg[2] = dst_v;
     // dst_hsv=dst_h,dst_s,dst_v;
 
     // cout << "h:" << dst_h << "s:" <<  dst_s << "v:"<< dst_v << endl;
@@ -81,8 +89,11 @@ void rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigne
 
 int main(int argc, char **argv)
 {
+  set_array();
   ros::init(argc, argv, "ros_realsense_opencv_tutorial");
   ros::NodeHandle nh;
+
+  ros::Publisher msg_hsv = nh.advertise<std_msgs::Int16MultiArray>("msg_hsv", 1000);
 
   cout << "OpenCV version : " << CV_VERSION << endl;
   cout << "Major version : "  << CV_MAJOR_VERSION << endl;
@@ -110,6 +121,8 @@ int main(int argc, char **argv)
 
   while(ros::ok())
   {
+    msg_hsv.publish(dst_hsv);
+
     // frames = pipe.wait_for_frames();
     // color_frame = frames.get_color_frame();
     cv::Mat dst;
@@ -274,11 +287,11 @@ int main(int argc, char **argv)
     rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
     // cout << "hsv : " << centers.at<cv::Vec3f>(i) << endl;
     // cout << "h:" << dst_hsv[0] << " s:" <<  dst_hsv[1] << " v:"<< dst_hsv[2] << endl;
-    cout << "hsv : " << dst_hsv[0]<<","<<dst_hsv[1]<<","<<dst_hsv[2]<< endl;
+    cout << "hsv : " << dst_hsv_for_msg[0]<<","<<dst_hsv_for_msg[1]<<","<<dst_hsv_for_msg[2]<< endl;
+    dst_hsv.data[0] = dst_hsv_for_msg[0];
+    dst_hsv.data[1] = dst_hsv_for_msg[1];
+    dst_hsv.data[2] = dst_hsv_for_msg[2];
   }
-  dst_hsv[0]=0;
-  dst_hsv[1]=0;
-  dst_hsv[2]=0;
    // after kmeans image generate, we need to arrange hsv space[W]
 
    cv::imshow("Result", res); 
