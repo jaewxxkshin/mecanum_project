@@ -32,7 +32,7 @@ int dst_hsv_for_msg[3];
 
 void set_array()
 {
-  dst_hsv.data.resize(3);
+  dst_hsv.data.resize(18);
 }
 
 void rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b)
@@ -288,9 +288,9 @@ int main(int argc, char **argv)
     // cout << "hsv : " << centers.at<cv::Vec3f>(i) << endl;
     // cout << "h:" << dst_hsv[0] << " s:" <<  dst_hsv[1] << " v:"<< dst_hsv[2] << endl;
     cout << "hsv : " << dst_hsv_for_msg[0]<<","<<dst_hsv_for_msg[1]<<","<<dst_hsv_for_msg[2]<< endl;
-    dst_hsv.data[0] = dst_hsv_for_msg[0];
-    dst_hsv.data[1] = dst_hsv_for_msg[1];
-    dst_hsv.data[2] = dst_hsv_for_msg[2];
+    dst_hsv.data[3*i+0] = dst_hsv_for_msg[0];
+    dst_hsv.data[3*i+1] = dst_hsv_for_msg[1];
+    dst_hsv.data[3*i+2] = dst_hsv_for_msg[2];
   }
    // after kmeans image generate, we need to arrange hsv space[W]
 
