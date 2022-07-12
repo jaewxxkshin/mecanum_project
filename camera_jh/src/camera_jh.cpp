@@ -7,7 +7,10 @@
 #include <typeinfo>
 #include <vector>
 #include <math.h>
+#include <std_msgs/Int16MultiArray.h>
 
+
+std_msgs::Int16MultiArray dst_hsv;
 
 //using namespace cv;
 using namespace std;
@@ -15,13 +18,23 @@ cv::Mat img_roi;
 
 int n = 2;
 int countt  = 0;
+int dst_hsv_for_msg[3];
 
-// RGV2HSV function [k] 
-
+#define Cluster_number 6 // [jh]
 #define min_f(a, b, c)  (fminf(a, fminf(b, c)))
 #define max_f(a, b, c)  (fmaxf(a, fmaxf(b, c)))
 
-int rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b)
+
+// resize function [k]
+
+void set_array()
+{
+  dst_hsv.data.resize(18);
+}
+
+// RGV2HSV function [k] 
+
+void rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b)
 {
     float r = src_r / 255.0f;
     float g = src_g / 255.0f;
@@ -61,21 +74,24 @@ int rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned
     int dst_h = (unsigned int)(h / 2);   
     int dst_s = (unsigned int)(s * 255); 
     int dst_v = (unsigned int)(v * 255); 
+    dst_hsv_for_msg[0] = dst_h;
+    dst_hsv_for_msg[1] = dst_s;
+    dst_hsv_for_msg[2] = dst_v;
+    // dst_hsv=dst_h,dst_s,dst_v;
 
-    cout << "h:" << dst_h << "s:" <<  dst_s << "v:"<< dst_v << endl;
-
-    return dst_h, dst_s, dst_v;
-   
+    // cout << "h:" << dst_h << "s:" <<  dst_s << "v:"<< dst_v << endl;
+    
+    // return dst_hsv;
+    return;
 }
 
 
 int main(int argc, char **argv)
 {
+  set_array();
   ros::init(argc, argv, "ros_realsense_opencv_tutorial");
   ros::NodeHandle nh;
-
-  cout << "OpenCV version : " << CV_VERSION << endl;
-  cout << "Major version : "  << CV_MAJOR_VERSION << endl;
+  ros::Publisher msg_hsv = nh.advertise<std_msgs::Int16MultiArray>("msg_hsv", 1000);
 
 
   rs2::pipeline pipe;
@@ -93,8 +109,6 @@ int main(int argc, char **argv)
     frames = pipe.wait_for_frames();
   }
 
-  //cv::namedWindow("Display Imagee", cv::WINDOW_AUTOSIZE);
-
   ros::Rate loop_rate(30);
 
   while(ros::ok())
@@ -105,15 +119,6 @@ int main(int argc, char **argv)
     cv::Point2f src_p[4], dst_p[4];
     cout << "count : " << countt << endl;
     //imshow("Display Image", src);
-
-    //perspective transform [W]
-    ///////////////////////////////////////////////////
-    
-
-    //img_roi's shape = (560, 560)[W]
-    //img_roi = src(cv::Rect(400, 160, 560, 560));
-    // cv::imwrite("output.png", img_roi);
-    //cv::imwrite("original.png", src);
 
     // [jaeho]
     src_p[0] = cv::Point2f(443,478);
@@ -126,187 +131,115 @@ int main(int argc, char **argv)
     dst_p[2] = cv::Point2f(604+268/n,720-268/n*3/2);
     dst_p[3] = cv::Point2f(604+268/n,720);
 
-    //[jaewook]
-    // src_p[0] = cv::Point2f(565,351);
-    // src_p[1] = cv::Point2f(445,720);
-    // src_p[2] = cv::Point2f(887,351);
-    // src_p[3] = cv::Point2f(1065,720);
-
-    // dst_p[0] = cv::Point2f(755-310/n,720-310/n*6/2);
-    // dst_p[1] = cv::Point2f(755-310/n,720);
-    // dst_p[2] = cv::Point2f(755+310/n,720-310/n*6/2);
-    // dst_p[3] = cv::Point2f(755+310/n,720);
-
-
     cv::Mat perspective_mat = cv::getPerspectiveTransform(src_p, dst_p);
 
-    //cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
-  // jaewook's code 
-    if(countt== 0 || countt ==150)
-  { 
-    cv::Mat src(cv::Size(1280,720), CV_8UC3, (void*)color_frame.get_data(), cv::Mat::AUTO_STEP);
+    // get image every 5s[W]
+    if(countt== 0 || countt ==120)
+    { 
+      // variations [W]
+      //------------------------------------------------------------------------------------------
+      // Image generation variation[W]
+      cv::Mat src(cv::Size(1280,720), CV_8UC3, (void*)color_frame.get_data(), cv::Mat::AUTO_STEP);
+      // 2022.07.06 kmeans Matrixc variations[W]
+      cv::Mat res, points, labels, centers;
+      // color detect and binarization Matrix variations[W]
+      cv::Mat hsv,red_mask, red_image, gray, blur;
+      // edge Matrix variation[W]
+      cv::Mat edge;
+      // varaitons of kmeans algorithm
+      int width, height, x, y, n, nPoints, cIndex, iTemp, i;
+      const int k = 8;
+      //------------------------------------------------------------------------------------------
     
-    cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
-    cv::imshow("src", src);
-    cv::imshow("dst", dst);
+      cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
+      // cv::imshow("src", src); // original image[W]
+      //cv::imshow("dst", dst); // perspective transformation image[W]
     
-    //function test[k]
-    rgb2hsv(136,49,54);
-    //////////////////
+      // apply filter and get edge [W]
+      cvtColor(dst,gray, cv::COLOR_BGR2GRAY);
+      GaussianBlur( gray, blur, cv::Size(7, 7), 0);
+      Canny(blur, edge, 10, 150);
+      //cv::imshow("edge", edge); // edge image[W]
 
-    // color detect and binarization[W]
-    ///////////////////////////////////////////////////
-    cv::Mat hsv,red_mask, red_image, gray, blur;
-    //cvtColor(img_roi, hsv, cv::COLOR_BGR2HSV);
-    //GaussianBlur( src, dst, kernel_size, sigma_x, sigma_y, borderType) 
-    cvtColor(dst,gray, cv::COLOR_BGR2GRAY);
-    GaussianBlur( gray, blur, cv::Size(7, 7), 0);
-    // cvtColor(blur, hsv, cv::COLOR_BGR2HSV);
-    // cv::Scalar lower_red = cv::Scalar(-10, 100, 100);
-    // cv::Scalar upper_red = cv::Scalar(10, 255, 255);
-    // inRange(hsv, lower_red, upper_red, red_mask);
-    // bitwise_and(dst, dst, red_image, red_mask);
-    // cv::imshow("mask", red_mask);
-    cv::imshow("blur", blur);
-    cv::Mat edge;
-    Canny(blur, edge, 10, 150);
-    cv::imshow("edge", edge);
-    countt=0;
-
-    // // 2022.07.06 kmeans first trial[W]
-    // // data reshape to examine kmeans algorithm
-    // cv::Mat data;
-    // cv::Mat flat_label;
-    // cv::Mat temp, res;
-    // data = dst.reshape( 3, dst.rows * dst.cols);
-    // data.convertTo (data, CV_32FC3);
-    // // just check[W]
-    // cout <<"shape: "<<data.size()<<data.channels()<<endl;;
-
-    // // kmeans algorithm[W]
-    // cv::Mat bestLabels, centers, clustered;
-    // int K = 8;
-    // cv::kmeans(data, K, bestLabels,
-    //         cv::TermCriteria( CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 10, 1.0),
-    //         20, cv::KMEANS_PP_CENTERS, centers);
-    // centers.convertTo (centers, CV_8UC3);
-    // flat_label = bestLabels.reshape(1, 1);
-    // // cout << flat_label <<endl;
-    // // cout <<"shape: "<<flat_label.size()<< flat_label.channels()<<endl;;
-    // //data = centers(flat_label);
-    // // cout << *typeid(centers).name() <<endl;
-    // for (int i = 0; i < flat_label.cols; i++)
-    // {
-    //   uchar idx = flat_label.at<uchar>(i);
-    //   uchar r = centers.at<Vec3b>(idx)[0];
+      // initailization of renewal flag variation[W]
+      countt=0;
     
-    // }
-
-    // // 2022.07.06 kmeans second trial[W]
-    cv::Mat res, points, labels, centers;
-    int width, height, x, y, n, nPoints, cIndex, iTemp;
-    const int k = 8;
-     
-    // 이미지 정보 파악
-    width = dst.cols, height = dst.rows;
-    nPoints = width * height;
+      // recognize image informations[W]
+      width = dst.cols, height = dst.rows;
+      nPoints = width * height;
  
-    // 초기화
-    points.create(nPoints, 1, CV_32FC3);        // 입력 데이터
-    centers.create(k, 1, points.type());        // k개의 mean 결과값들
-    res.create(height, width, dst.type());      // 결과 영상
+      // initialization (create)[W]
+      points.create(nPoints, 1, CV_32FC3);        // input data[W]
+      centers.create(k, 1, points.type());        // results of k means[W]
+      res.create(height, width, dst.type());      // results images[W]
 
-    // kmeans 함수에 맞게 데이터 변환
-    for(y = 0, n = 0; y < height; y++)
-    {
-        for(x = 0; x < width; x++, n++)
-        {
-            points.at<cv::Vec3f>(n)[0] = dst.at<cv::Vec3b>(y, x)[0];
-            points.at<cv::Vec3f>(n)[1] = dst.at<cv::Vec3b>(y, x)[1];
-            points.at<cv::Vec3f>(n)[2] = dst.at<cv::Vec3b>(y, x)[2];
-        } 
+      // data transform to fitting kmeasn algortihm[W]
+      // there's no way to save computing time????[W]
+      for(y = 0, n = 0; y < height; y++)
+      {
+          for(x = 0; x < width; x++, n++)
+          {
+              points.at<cv::Vec3f>(n)[0] = dst.at<cv::Vec3b>(y, x)[0];
+              points.at<cv::Vec3f>(n)[1] = dst.at<cv::Vec3b>(y, x)[1];
+              points.at<cv::Vec3f>(n)[2] = dst.at<cv::Vec3b>(y, x)[2];
+          } 
+      }
+      
+      // k-means clustering[W]
+      kmeans(points, k, labels, cv::TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 10, 1.0), 
+             20, cv::KMEANS_PP_CENTERS, centers);
+    
+      // visualization of result of kmeans algorithm[W]
+      // if We don't need to visualization ...??[W]
+
+      // test v_ 1 2022.07.12 [W]
+      //---------------------------------------------------------
+      // for(y = 0, n = 0; y < height; y++)
+      // {
+      //     for(x = 0; x < width; x++, n++)
+      //     {
+      //         cIndex = labels.at<int>(n);
+      //         iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[0]);
+      //         iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
+      //         res.at<cv::Vec3b>(y, x)[0] = (uchar)iTemp;
+
+      //         iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[1]);
+      //         iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
+      //         res.at<cv::Vec3b>(y, x)[1] = (uchar)iTemp;
+
+      //         iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[2]);
+      //         iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
+      //         res.at<cv::Vec3b>(y, x)[2] = (uchar)iTemp;
+      //     } 
+      // }
+      //---------------------------------------------------------
+
+      // after kmeans image generate, we need to arrange hsv space[W]
+      for (i=0; i<Cluster_number; i++)
+      {
+        // rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
+        rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
+        // cout << "hsv : " << centers.at<cv::Vec3f>(i) << endl;
+        // cout << "h:" << dst_hsv[0] << " s:" <<  dst_hsv[1] << " v:"<< dst_hsv[2] << endl;
+        cout << "hsv : " << dst_hsv_for_msg[0]<<","<<dst_hsv_for_msg[1]<<","<<dst_hsv_for_msg[2]<< endl;
+        dst_hsv.data[3*i+0] = dst_hsv_for_msg[0];
+        dst_hsv.data[3*i+1] = dst_hsv_for_msg[1];
+        dst_hsv.data[3*i+2] = dst_hsv_for_msg[2];
+      } 
+      // May be we don't need to see this[W]
+      //cv::imshow("Result", res);
+
+      // publish topic every 5s
+      msg_hsv.publish(dst_hsv); 
     }
-    // dst.convertTo (dst, CV_32FC3);
-    // k-means clustering
-    kmeans(points, k, labels, cv::TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 10, 1.0), 
-           20, cv::KMEANS_PP_CENTERS, centers);
-    std::cout << centers << std::endl;
-    // 클러스터링 결과물을 이미지로 보여주기 위한 변환
-    for(y = 0, n = 0; y < height; y++)
-    {
-        for(x = 0; x < width; x++, n++)
-        {
-            cIndex = labels.at<int>(n);
-            iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[0]);
-            iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
-            res.at<cv::Vec3b>(y, x)[0] = (uchar)iTemp;
-            
-            iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[1]);
-            iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
-            res.at<cv::Vec3b>(y, x)[1] = (uchar)iTemp;
- 
-            iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[2]);
-            iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
-            res.at<cv::Vec3b>(y, x)[2] = (uchar)iTemp;
-        } 
-    }
-   // after kmeans image generate, we need to arrange hsv space[W]
-
-   cv::imshow("Result", res); 
-  //  cv::imwrite("original.png", src);
-
-   //convert HSV
-   
-   cv::cvtColor(res,hsv,cv::COLOR_BGR2HSV); 
-   cv::imshow("HSV", hsv); 
-   
-   // centers hsv convert [JH] 
-   
-
-   }
-    // image renewal preiod [W]
+    // image renewal flag increasing[W]
     countt++;
     
-    
-    
-  // jaeho's code
-    // if(countt > 150)
-    // {
-    // countt=0;
-    // frames = pipe.wait_for_frames();
-    // color_frame = frames.get_color_frame();
-    // cv::Mat src(cv::Size(1280,720), CV_8UC3, (void*)color_frame.get_data(), cv::Mat::AUTO_STEP);
-    // cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
-    // cv::imshow("src", src);
-    // cv::imshow("dst", dst);
-    // // color detect and binarization[W]
-    // ///////////////////////////////////////////////////
-    // cv::Mat hsv,red_mask, red_image;
-    // //cvtColor(img_roi, hsv, cv::COLOR_BGR2HSV);
-    // cvtColor(dst, hsv, cv::COLOR_BGR2HSV);
-    // cv::Scalar lower_red = cv::Scalar(-10, 100, 100);
-    // cv::Scalar upper_red = cv::Scalar(10, 255, 255);
-    // inRange(hsv, lower_red, upper_red, red_mask);
-    // bitwise_and(dst, dst, red_image, red_mask);
-    // cv::imshow("mask", red_mask);
-    // ////////////////////////////////////////////////// 
-    // }
-    // else
-    // {
-    // countt ++;
-    // }
-
-
-
+    // if press 'esc' stop releasing image
     if(cv::waitKey(10)==27) break;
     loop_rate.sleep();
     ros::spinOnce();
   }
-  
-  //validation
-  //cout <<"w: "<<img_roi.size().width<<endl;
-  //cout <<"h: "<<img_roi.size().height<<endl;
-  //
   return 0;
 }
 
