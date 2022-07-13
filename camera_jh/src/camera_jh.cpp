@@ -22,14 +22,14 @@ cv::Mat img_roi;
 int n = 2;
 
 // variation To save K-means result Image[W]
-string img_name = "Image";
+string img_name = "/home/mrl/bag_image/Image";
 string type = ".png";
 string temp = "";
 
 int countt  = 0;
 int dst_hsv_for_msg[3];
 
-#define Cluster_number 6 // [jh]
+
 #define min_f(a, b, c)  (fminf(a, fminf(b, c)))
 #define max_f(a, b, c)  (fmaxf(a, fmaxf(b, c)))
 
@@ -38,7 +38,7 @@ int dst_hsv_for_msg[3];
 
 void set_array()
 {
-  dst_hsv.data.resize(18);
+  dst_hsv.data.resize(24);
 }
 
 // RGV2HSV function [k] 
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
       cv::Mat edge;
       // varaitons of kmeans algorithm
       int width, height, x, y, n, nPoints, cIndex, iTemp, i;
-      const int k = 8;
+      const int cluster_k = 8;
       //------------------------------------------------------------------------------------------
     
       cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
  
       // initialization (create)[W]
       points.create(nPoints, 1, CV_32FC3);        // input data[W]
-      centers.create(k, 1, points.type());        // results of k means[W]
+      centers.create(cluster_k, 1, points.type());        // results of k means[W]
       res.create(height, width, dst.type());      // results images[W]
 
       // data transform to fitting kmeasn algortihm[W]
@@ -195,7 +195,7 @@ int main(int argc, char **argv)
       }
       
       // k-means clustering[W]
-      kmeans(points, k, labels, cv::TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 10, 1.0), 
+      kmeans(points, cluster_k, labels, cv::TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 10, 1.0), 
              20, cv::KMEANS_PP_CENTERS, centers);
     
       // visualization of result of kmeans algorithm[W]
@@ -224,7 +224,7 @@ int main(int argc, char **argv)
       //---------------------------------------------------------
 
       // after kmeans image generate, we need to arrange hsv space[W]
-      for (i=0; i<Cluster_number; i++)
+      for (i=0; i<cluster_k; i++)
       {
         // rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
         rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
