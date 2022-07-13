@@ -8,6 +8,7 @@
 #include <vector>
 #include <math.h>
 #include <std_msgs/Int16MultiArray.h>
+#include <string>
 
 
 std_msgs::Int16MultiArray dst_hsv;
@@ -16,7 +17,15 @@ std_msgs::Int16MultiArray dst_hsv;
 using namespace std;
 cv::Mat img_roi;
 
+
+
 int n = 2;
+
+// variation To save K-means result Image[W]
+string img_name = "Image";
+string type = ".png";
+string temp = "";
+
 int countt  = 0;
 int dst_hsv_for_msg[3];
 
@@ -154,7 +163,7 @@ int main(int argc, char **argv)
       cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
       // cv::imshow("src", src); // original image[W]
       //cv::imshow("dst", dst); // perspective transformation image[W]
-    
+
       // apply filter and get edge [W]
       cvtColor(dst,gray, cv::COLOR_BGR2GRAY);
       GaussianBlur( gray, blur, cv::Size(7, 7), 0);
@@ -194,24 +203,24 @@ int main(int argc, char **argv)
 
       // test v_ 1 2022.07.12 [W]
       //---------------------------------------------------------
-      // for(y = 0, n = 0; y < height; y++)
-      // {
-      //     for(x = 0; x < width; x++, n++)
-      //     {
-      //         cIndex = labels.at<int>(n);
-      //         iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[0]);
-      //         iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
-      //         res.at<cv::Vec3b>(y, x)[0] = (uchar)iTemp;
+      for(y = 0, n = 0; y < height; y++)
+      {
+          for(x = 0; x < width; x++, n++)
+          {
+              cIndex = labels.at<int>(n);
+              iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[0]);
+              iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
+              res.at<cv::Vec3b>(y, x)[0] = (uchar)iTemp;
 
-      //         iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[1]);
-      //         iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
-      //         res.at<cv::Vec3b>(y, x)[1] = (uchar)iTemp;
+              iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[1]);
+              iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
+              res.at<cv::Vec3b>(y, x)[1] = (uchar)iTemp;
 
-      //         iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[2]);
-      //         iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
-      //         res.at<cv::Vec3b>(y, x)[2] = (uchar)iTemp;
-      //     } 
-      // }
+              iTemp = cvRound(centers.at<cv::Vec3f>(cIndex)[2]);
+              iTemp = iTemp > 255 ? 255 : iTemp < 0 ? 0 : iTemp;
+              res.at<cv::Vec3b>(y, x)[2] = (uchar)iTemp;
+          } 
+      }
       //---------------------------------------------------------
 
       // after kmeans image generate, we need to arrange hsv space[W]
@@ -229,8 +238,15 @@ int main(int argc, char **argv)
       // May be we don't need to see this[W]
       //cv::imshow("Result", res);
 
+      // save result of K-means Image[W]
+      img_name = img_name + type;
+      //cout << img_name << endl;
+      cv::imwrite(img_name, res);
+    
+
       // publish topic every 5s
       msg_hsv.publish(dst_hsv); 
+      
     }
     // image renewal flag increasing[W]
     countt++;
