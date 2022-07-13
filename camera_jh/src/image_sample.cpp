@@ -26,13 +26,30 @@ int countt  = 0;
 #define min_f(a, b, c)  (fminf(a, fminf(b, c)))
 #define max_f(a, b, c)  (fmaxf(a, fmaxf(b, c)))
 
-#define Cluster_number 6 // [jh]
+#define Cluster_number 8 // [jh]
+
+#define img_width 1280
+#define img_height 720
 
 int dst_hsv_for_msg[3];
 
 void set_array()
 {
   dst_hsv.data.resize(18);
+}
+
+int img_x ( const unsigned int &x)
+{ 
+  int converted_x = 0;
+  converted_x= x-img_width/2;
+  return converted_x;
+}
+
+int img_y ( const unsigned int &y)
+{
+  int converted_y = 0;
+  converted_y= -(y-img_height);
+  return converted_y;
 }
 
 void rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b)
@@ -168,7 +185,7 @@ int main(int argc, char **argv)
   // jaewook's code 
     
     // cv::Mat src(cv::Size(1280,720), CV_8UC3, (void*)color_frame.get_data(), cv::Mat::AUTO_STEP);
-    cv::Mat src = cv::imread("original.png");
+    cv::Mat src = cv::imread("Image.png.png");
     cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
     cv::imshow("src", src);
     cv::imshow("dst", dst);
@@ -302,12 +319,8 @@ int main(int argc, char **argv)
    cv::cvtColor(res,hsv,cv::COLOR_BGR2HSV); 
    cv::imshow("HSV", hsv); 
    
-   // centers hsv convert [JH] 
-   
-
-   
-    // image renewal preiod [W]
-    countt++;
+   // image renewal preiod [W]
+   countt++;
     
     
     
