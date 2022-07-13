@@ -52,11 +52,11 @@ int img_y ( const unsigned int &y)
   return converted_y;
 }
 
-void rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b)
+void bgr2hsv(const unsigned int &src_b, const unsigned int &src_g, const unsigned int &src_r)
 {
-    float r = src_r / 255.0f;
-    float g = src_g / 255.0f;
     float b = src_b / 255.0f;
+    float g = src_g / 255.0f;
+    float r = src_r / 255.0f;
 
     float h, s, v; // h:0-360.0, s:0.0-1.0, v:0.0-1.0
 
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 //   rs2::frame color_frame;
   
 
-  int rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b);
+  int bgr2hsv(const unsigned int &src_b, const unsigned int &src_g, const unsigned int &src_r);
   
 //   cfg.enable_stream(RS2_STREAM_COLOR, 1280,720, RS2_FORMAT_BGR8, 30);
 //   pipe.start(cfg);
@@ -185,7 +185,7 @@ int main(int argc, char **argv)
   // jaewook's code 
     
     // cv::Mat src(cv::Size(1280,720), CV_8UC3, (void*)color_frame.get_data(), cv::Mat::AUTO_STEP);
-    cv::Mat src = cv::imread("Image.png.png");
+    cv::Mat src = cv::imread("/home/mrl/catkin_ws/original.png");
     cv::warpPerspective(src, dst, perspective_mat, cv::Size(1280,720));
     cv::imshow("src", src);
     cv::imshow("dst", dst);
@@ -194,8 +194,8 @@ int main(int argc, char **argv)
     // int dst_h = 0;
     // int dst_s = 0;
     // int dst_v = 0;
-    // dst_h,dst_s,dst_v= rgb2hsv(134,52,56);
-    // rgb2hsv(134,52,56);
+    // dst_h,dst_s,dst_v= bgr2hsv(134,52,56);
+    bgr2hsv(134,52,56);
 
     //////////////////
     
@@ -300,8 +300,8 @@ int main(int argc, char **argv)
 
   for (i=0; i<Cluster_number; i++)
   {
-    // rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
-    rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
+    // bgr2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
+    bgr2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
     // cout << "hsv : " << centers.at<cv::Vec3f>(i) << endl;
     // cout << "h:" << dst_hsv[0] << " s:" <<  dst_hsv[1] << " v:"<< dst_hsv[2] << endl;
     cout << "hsv : " << dst_hsv_for_msg[0]<<","<<dst_hsv_for_msg[1]<<","<<dst_hsv_for_msg[2]<< endl;
@@ -312,7 +312,7 @@ int main(int argc, char **argv)
    // after kmeans image generate, we need to arrange hsv space[W]
 
    cv::imshow("Result", res); 
-   cv::imwrite("kmeans.png", res);
+   //cv::imwrite("kmeans.png", res);
 
    //convert HSV
    

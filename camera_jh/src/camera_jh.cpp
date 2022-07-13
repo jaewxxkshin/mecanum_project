@@ -43,16 +43,16 @@ void set_array()
 
 // RGV2HSV function [k] 
 
-void rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b)
+void bgr2hsv(const unsigned int &src_b, const unsigned int &src_g, const unsigned int &src_r)
 {
-    float r = src_r / 255.0f;
-    float g = src_g / 255.0f;
     float b = src_b / 255.0f;
+    float g = src_g / 255.0f;
+    float r = src_r / 255.0f;
 
     float h, s, v; // h:0-360.0, s:0.0-1.0, v:0.0-1.0
 
-    float max = max_f(r, g, b);
-    float min = min_f(r, g, b);
+    float max = max_f(b, g, r);
+    float min = min_f(b, g, r);
 
     v = max;
 
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
   rs2::frameset frames;
   rs2::frame color_frame;
 
-  int rgb2hsv(const unsigned int &src_r, const unsigned int &src_g, const unsigned int &src_b);
+  int bgr2hsv(const unsigned int &src_b, const unsigned int &src_g, const unsigned int &src_r);
 
   cfg.enable_stream(RS2_STREAM_COLOR, 1280,720, RS2_FORMAT_BGR8, 30);
   pipe.start(cfg);
@@ -226,8 +226,8 @@ int main(int argc, char **argv)
       // after kmeans image generate, we need to arrange hsv space[W]
       for (i=0; i<cluster_k; i++)
       {
-        // rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
-        rgb2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
+        // bgr2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
+        bgr2hsv(int(centers.at<cv::Vec3f>(i)[0]),int(centers.at<cv::Vec3f>(i)[1]),int(centers.at<cv::Vec3f>(i)[2]));
         // cout << "hsv : " << centers.at<cv::Vec3f>(i) << endl;
         // cout << "h:" << dst_hsv[0] << " s:" <<  dst_hsv[1] << " v:"<< dst_hsv[2] << endl;
         cout << "hsv : " << dst_hsv_for_msg[0]<<","<<dst_hsv_for_msg[1]<<","<<dst_hsv_for_msg[2]<< endl;

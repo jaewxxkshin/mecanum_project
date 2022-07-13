@@ -12,7 +12,7 @@
 #define img_height 720
 
 // message for array of waypoint [jh]
-std_msgs:: Int16MultiArray arr_wp;
+// std_msgs:: Int16MultiArray arr_wp;
 
 //using namespace cv;
 using namespace std;
@@ -46,17 +46,20 @@ int main(int argc, char **argv)
   
   // Publisher for arr_wp [jh]
 //   ros::Publisher  = nh.advertise<std_msgs::Int16MultiArray>("msg_hsv", 1000);
-
+  
   while(ros::ok())
   {
     cv::Mat src,hsv,red_mask, red_image, gray;
+    cv::Mat img_roi, img_roi2;
+    src = cv::imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image2.png");
+    cv::imshow("src", src);
 
     // arr_wp publish [jh]
     // msg_hsv.publish(dst_hsv);
     
     // get image [jh]
-    src = cv::imread("Image2.png");
-    cv::imshow("src", src);
+    
+    
     int width, height,nPoints;
 
     // get info of img [jh]
@@ -65,14 +68,18 @@ int main(int argc, char **argv)
 
     // change img bgr to hsv [jh]
     cv::cvtColor(src,hsv,cv::COLOR_BGR2HSV); 
+    img_roi = hsv(cv::Rect(cv::Point(650, 400),cv::Point( 651, 401)));
+    img_roi2 = src(cv::Rect(cv::Point(650, 400),cv::Point( 651, 401)));
+    cout << img_roi << endl;
+    cout << img_roi2 << endl;
 
     // Red_HSV_range (based on dataset)
-    // cv::Scalar lower_red = cv::Scalar(170, 100, 100);
-    // cv::Scalar upper_red = cv::Scalar(180, 255, 255);
+    cv::Scalar lower_red = cv::Scalar(170, 100, 100);
+    cv::Scalar upper_red = cv::Scalar(180, 255, 255);
 
     // Red_HSV_range (based on dataset_1)
-    cv::Scalar lower_red = cv::Scalar(10, 100, 100);
-    cv::Scalar upper_red = cv::Scalar(30, 255, 255);
+    // cv::Scalar lower_red = cv::Scalar(10, 100, 100);
+    // cv::Scalar upper_red = cv::Scalar(30, 255, 255);
 
     // Blue_HSV_range (based on dataset_ 1)
     cv::Scalar lower_blue = cv::Scalar(110, 100, 100);
