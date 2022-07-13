@@ -17,6 +17,8 @@
 //using namespace cv;
 using namespace std;
 
+int color = 1;
+
 // function for resizing topic [jh]
 // void set_array()
 // {
@@ -46,51 +48,72 @@ int main(int argc, char **argv)
   
   // Publisher for arr_wp [jh]
 //   ros::Publisher  = nh.advertise<std_msgs::Int16MultiArray>("msg_hsv", 1000);
-  
+  cv::Mat img_bin = cv::Mat::zeros(cv::Size(1280, 720), CV_8UC3);
+
   while(ros::ok())
   {
-    cv::Mat src,hsv,red_mask, red_image, gray;
-    cv::Mat img_roi, img_roi2;
-    src = cv::imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image2.png");
-    cv::imshow("src", src);
-
-    // arr_wp publish [jh]
-    // msg_hsv.publish(dst_hsv);
-    
-    // get image [jh]
-    
-    
-    int width, height,nPoints;
-
-    // get info of img [jh]
-    width = src.cols, height = src.rows;
-    nPoints = width * height;
-
-    // change img bgr to hsv [jh]
-    cv::cvtColor(src,hsv,cv::COLOR_BGR2HSV); 
-    img_roi = hsv(cv::Rect(cv::Point(650, 400),cv::Point( 651, 401)));
-    img_roi2 = src(cv::Rect(cv::Point(650, 400),cv::Point( 651, 401)));
-    cout << img_roi << endl;
-    cout << img_roi2 << endl;
-
-    // Red_HSV_range (based on dataset)
-    cv::Scalar lower_red = cv::Scalar(170, 100, 100);
-    cv::Scalar upper_red = cv::Scalar(180, 255, 255);
-
-    // Red_HSV_range (based on dataset_1)
-    // cv::Scalar lower_red = cv::Scalar(10, 100, 100);
-    // cv::Scalar upper_red = cv::Scalar(30, 255, 255);
-
-    // Blue_HSV_range (based on dataset_ 1)
-    cv::Scalar lower_blue = cv::Scalar(110, 100, 100);
-    cv::Scalar upper_blue = cv::Scalar(130, 255, 255);
-
-    // red_mask [jh]
-    cv::inRange(hsv, lower_red, upper_red, red_mask);    
-    cv::bitwise_and(src, src, red_image, red_mask);
-    cv::imshow("red_mask",red_mask);
-    if(cv::waitKey(10)==27) break;
-    ros::spinOnce();
+  cv::Mat src, hsv, gray, image, mask, mask_sc, blur, edge;
+  
+  vector<cv::Vec4i> linesP;
+  src = cv::imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image2.png");
+  cv::imshow("src", src);
+  // arr_wp publish [jh]
+  // msg_hsv.publish(dst_hsv);
+  
+  // get image [jh]
+  
+  
+  int width, height, nPoints;
+  // get info of img [jh]
+  width = src.cols, height = src.rows;
+  nPoints = width * height;
+  // change img bgr to hsv [jh]
+  cvtColor(src,hsv,cv::COLOR_BGR2HSV); 
+  // Red_HSV_range (based on dataset)
+  cv::Scalar lower_red = cv::Scalar(160, 100, 100);
+  cv::Scalar upper_red = cv::Scalar(180, 255, 255);
+  // Red_HSV_range (hsv of red - special case)
+  cv::Scalar lower_red_sc = cv::Scalar(0, 100, 100);
+  cv::Scalar upper_red_sc = cv::Scalar(20, 255, 255);
+  // Blue_HSV_range (based on dataset_ 1)
+  cv::Scalar lower_blue = cv::Scalar(90, 100, 100);
+  cv::Scalar upper_blue = cv::Scalar(130, 255, 255);
+  // hsv detect
+  // mask : color 1 is red / color 2 is blue
+  //========================================================================
+  if(color ==1)
+  {
+    inRange(hsv, lower_red, upper_red, mask);  
+    inRange(hsv, lower_red_sc, upper_red_sc, mask_sc);
+    bitwise_or(mask, mask_sc, mask);
+    bitwise_and(src, src, image, mask);
+    cv::imshow("red", image);
+  }
+  else if (color ==2)
+  {
+    inRange(hsv, lower_blue, upper_blue, mask);  
+    bitwise_and(src, src, image, mask);
+    cv::imshow("blue", image);
+  }
+  //========================================================================
+  // line detect[W]
+  //========================================================================
+  cvtColor(image, gray, cv::COLOR_BGR2GRAY);
+  GaussianBlur( gray, blur, cv::Size(7, 7), 0);
+  Canny(blur, edge, 10, 150);
+  cv::imshow("edge", edge);
+  HoughLinesP(edge, linesP, 1, (CV_PI / 180), 50, 100, 100);
+  
+  for (size_t i = 0; i < linesP.size(); i++)
+  {
+    cv::Vec4i line = linesP[i];
+    cv::line(img_bin, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 255, 255), 2, 8);
+    cout << linesP[i] << endl;      
+  }
+  cv::imshow("img_bin", img_bin);
+  
+  if(cv::waitKey(10)==27) break;
+  ros::spinOnce();
   }
   return 0;
 }
