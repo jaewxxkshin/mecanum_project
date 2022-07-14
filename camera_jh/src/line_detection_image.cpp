@@ -77,9 +77,13 @@ int main()
   vector<int> wp_x;
   vector<int> wp_y_c;
   vector<int> wp_x_c;
+
   // variation after applying fitLine() function [W]
   float vx, vy;
   int upper_x, lower_x, top_y, x, y, converted_x, converted_y;
+
+  // 2-D vector for way points [W]
+  vector<pair<int, int>> wp_xy;
   // -------------------------------------------
 
   // Red_HSV_range (based on dataset)
@@ -95,7 +99,7 @@ int main()
   
 
   // read image [JH]
-  src = imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image.png.png");
+  src = imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image4.png");
 
   // BGR -> HSV [HW]
   cvtColor(src,hsv,COLOR_BGR2HSV); 
@@ -126,7 +130,7 @@ int main()
 
   // find contours [HW]
   findContours(mask, contours, hierachy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE); 
-  // drawContours(image, contours, -1, Scalar(255, 0, 0), 5);  
+  drawContours(image, contours, -1, Scalar(255, 0, 0), 5);  
 
   // setting y threshold [JH]
   //========================================================================
@@ -169,36 +173,42 @@ int main()
   for(int i=0; i<10; i++)
   {
     wp_y.push_back(top_y/10*(i+1));
-  }
-  for(int i=0; i<10; i++)
-  {
     wp_x.push_back((vx/vy*(wp_y[i]-converted_y)+converted_x));
+    // use make_pair [W]
+    wp_xy.push_back(make_pair(wp_x[i], wp_y[i]));
+  }
+
+  // need to modify [W]
+  for(int i = 0; i < wp_xy.size(); i++)
+  {
+    cout <<"way point" << i + 1<< "'s x value : " <<wp_xy[i].first*distance_of_pixel << "cm, way point"<< i + 1 << "'s y value: " << wp_xy[i].second*distance_of_pixel<< "cm" <<endl;
   }
   for(int i=0; i<10; i++)
   {
     circle(src, Point(inv_convert_x(wp_x[i]), inv_convert_y(wp_y[i])), 5, Scalar(255,255,255), 3);
   }
 
-  // waypoint visualization on corner [HW]
-  for(int i=0; i<10; i++)
-  {
-    float theta = (i+1) * 10 * PI / 180;
-    wp_y_c.push_back(top_y * sin(theta));
-    cout << top_y << " " << theta << endl;
-    cout << wp_y_c[i] << endl;
-  }
-  for(int i=0; i<10; i++)
-  {
-    float theta = (i+1)*10 * PI / 180;
-    wp_x_c.push_back(lower_x - top_y + top_y * cos(theta));
-    // wp_x_c.push_back(lower_x - top_y * cos(theta));
-    cout << wp_x_c[i] << endl;
-  }
+  // 2022/07/15 temporay comment [W]
+  // // waypoint visualization on corner [HW]
+  // for(int i=0; i<10; i++)
+  // {
+  //   float theta = (i+1) * 10 * PI / 180;
+  //   wp_y_c.push_back(top_y * sin(theta));
+  //   cout << top_y << " " << theta << endl;
+  //   cout << wp_y_c[i] << endl;
+  // }
+  // for(int i=0; i<10; i++)
+  // {
+  //   float theta = (i+1)*10 * PI / 180;
+  //   wp_x_c.push_back(lower_x - top_y + top_y * cos(theta));
+  //   // wp_x_c.push_back(lower_x - top_y * cos(theta));
+  //   cout << wp_x_c[i] << endl;
+  // }
 
-  for(int i=0; i<10; i++)
-  {
-    circle(src, Point(inv_convert_x(wp_x_c[i]), inv_convert_y(wp_y_c[i])), 5, Scalar(255,255,255), 3);
-  }
+  // for(int i=0; i<10; i++)
+  // {
+  //   circle(src, Point(inv_convert_x(wp_x_c[i]), inv_convert_y(wp_y_c[i])), 5, Scalar(255,255,255), 3);
+  // }
 
 
 
@@ -208,11 +218,13 @@ int main()
   // visualization camera's origin(on converted coordinate) [JH]
   circle(src, Point(597,720), 10, Scalar(255,0,0), 5);
 
-  // visualization rotation Circle
-  circle(src, Point(inv_convert_x(lower_x - top_y),inv_convert_y(0)),top_y,Scalar(0,255,0),5);
+  // 2022/07/15 temporay comment [W]
+  // visualization rotation Circle[HW]
+  // circle(src, Point(inv_convert_x(lower_x - top_y),inv_convert_y(0)),top_y,Scalar(0,255,0),5);
 
   // save image [JH]
   imwrite("mask.png", mask);  
+  imwrite("contours.png", image);
   imwrite("result.png",src);  
 
   return 0;
