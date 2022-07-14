@@ -7,16 +7,46 @@ using namespace std;
 using namespace cv;
 
 #define PI 3.1415926
-
-int main() {
-	Mat input = imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image2.png", IMREAD_GRAYSCALE);
-	Mat contours;
+int main() 
+{
+	Mat src = imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image2.png");
+    Mat gray, hsv, contours;
+    Mat mask, mask_sc, image;
 	vector<Vec4i> lines;
+    int color = 2;
 
-	// applying canny algorithm
-	Canny(input, contours, 125, 350);
+    // change img bgr to hsv [jh]
+    cvtColor(src, gray, COLOR_BGR2GRAY);
+    cvtColor(src, hsv, COLOR_BGR2HSV);
+    // Red_HSV_range (based on dataset)
+    Scalar lower_red = Scalar(160, 100, 100);
+    Scalar upper_red = Scalar(180, 255, 255);
+    
+    Scalar lower_red_sc = Scalar(0, 100, 100);
+    Scalar upper_red_sc = Scalar(20, 255, 255);
+    
+    Scalar lower_blue = Scalar(90, 100, 100);
+    Scalar upper_blue = Scalar(130, 255, 255);
+    
+    if(color ==1)
+    {
+        inRange(hsv, lower_red, upper_red, mask);  
+        inRange(hsv, lower_red_sc, upper_red_sc, mask_sc);
+        bitwise_or(mask, mask_sc, mask);
+        bitwise_and(src, src, image, mask);
+        
+    }
+  else if (color ==2)
+    {
+        inRange(hsv, lower_blue, upper_blue, mask);  
+        bitwise_and(src, src, image, mask);
+    }
 
-	/************* Probabilistic hough transform *************/
+    // applying canny algorithm
+	Canny(mask, contours, 125, 350);
+    
+
+    /************* Probabilistic hough transform *************/
 	HoughLinesP(contours,	// InputArray
 		lines,				// OutputArray
 		1,					// rho
@@ -26,24 +56,24 @@ int main() {
 		20);				// maxGap
 
 	Mat houghLinesP;
-	input.copyTo(houghLinesP);
+	src.copyTo(houghLinesP);
 
 	// Draw the lines
-	Scalar color = Scalar(0, 0, 255);
+	
 	vector<Vec4i>::const_iterator it = lines.begin();
 	while (it != lines.end()) {
 		Point pt1((*it)[0], (*it)[1]);
 		Point pt2((*it)[2], (*it)[3]);
-		line(houghLinesP, pt1, pt2, color);
+		line(houghLinesP, pt1, pt2, Scalar(0, 0, 255), 1);
 		++it;
 	}
 
 	imwrite("houghLinesP.bmp", houghLinesP);
 
-	/************* Fitting a line *************/
+    /************* Fitting a line *************/
 	// black background
 	Mat oneline(contours.size(), CV_8U, Scalar(0));
-	cout<<contours.size()<<endl;
+	
 	// Select first line and draw white line
 	int n = 0;	
 	line(oneline,
@@ -56,23 +86,24 @@ int main() {
 
 	// contours AND white line
 	bitwise_and(contours, oneline, oneline);	// src1, src2, dst
+    
 
 	// insert into a vector<Point>
 	vector<Point> points;
 
 	// Iterate over the pixels to obtain all point positions
-	for (int y = 0; y < oneline.rows; y++) {
+	for (int y = 0; y < contours.rows; y++) {
 		// row y
-		uchar* rowPtr = oneline.ptr<uchar>(y);
+		uchar* rowPtr = contours.ptr<uchar>(y);
 
-		for (int x = 0; x < oneline.cols; x++) {
+		for (int x = 0; x < contours.cols; x++) {
 			// column x
 			if (rowPtr[x]) {	// if on a contour
 				points.push_back(Point(x, y));
 			}
 		}
 	}
-
+    cout << points << endl;
 	Vec4f line;
 	fitLine(points, line,
 		DIST_L2,		// distance type
@@ -85,14 +116,16 @@ int main() {
 	int y1 = y0 + 150 * line[1];
 	// draw the line
 	Mat result;
-	input.copyTo(result);
+	gray.copyTo(result);
 	cv::line(result, Point(x0, y0), Point(x1, y1), 
 		0, 2);	// color and thickness
 
 
 	/************* Image writer *************/
-	imwrite("input.bmp", input);
+	imwrite("input.bmp", src);
 	imwrite("contours.bmp", contours);
 	imwrite("[AfterBitwise]online.bmp", oneline);
 	imwrite("Fitted line.bmp", result);
+
+    
 }
