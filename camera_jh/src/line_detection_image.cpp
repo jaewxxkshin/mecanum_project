@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <math.h>
 
 // constant value[JH]
 #define left_width 310
@@ -12,6 +13,7 @@
 #define img_height 720
 #define distance_of_pixel 0.075  //cm
 #define pixels 72
+#define PI 3.141592
 
 using namespace cv;
 using namespace std;
@@ -73,7 +75,8 @@ int main()
   // vector that contains waypoint's position [W]
   vector<int> wp_y;
   vector<int> wp_x;
-
+  vector<int> wp_y_c;
+  vector<int> wp_x_c;
   // variation after applying fitLine() function [W]
   float vx, vy;
   int upper_x, lower_x, top_y, x, y, converted_x, converted_y;
@@ -92,7 +95,7 @@ int main()
   
 
   // read image [JH]
-  src = imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image4.png");
+  src = imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image.png.png");
 
   // BGR -> HSV [HW]
   cvtColor(src,hsv,COLOR_BGR2HSV); 
@@ -165,7 +168,7 @@ int main()
   // waypoint visualization [W]
   for(int i=0; i<10; i++)
   {
-    wp_y.push_back(72*(i+1));
+    wp_y.push_back(top_y/10*(i+1));
   }
   for(int i=0; i<10; i++)
   {
@@ -176,11 +179,37 @@ int main()
     circle(src, Point(inv_convert_x(wp_x[i]), inv_convert_y(wp_y[i])), 5, Scalar(255,255,255), 3);
   }
 
+  // waypoint visualization on corner [HW]
+  for(int i=0; i<10; i++)
+  {
+    float theta = (i+1) * 10 * PI / 180;
+    wp_y_c.push_back(top_y * sin(theta));
+    cout << top_y << " " << theta << endl;
+    cout << wp_y_c[i] << endl;
+  }
+  for(int i=0; i<10; i++)
+  {
+    float theta = (i+1)*10 * PI / 180;
+    wp_x_c.push_back(lower_x - top_y + top_y * cos(theta));
+    // wp_x_c.push_back(lower_x - top_y * cos(theta));
+    cout << wp_x_c[i] << endl;
+  }
+
+  for(int i=0; i<10; i++)
+  {
+    circle(src, Point(inv_convert_x(wp_x_c[i]), inv_convert_y(wp_y_c[i])), 5, Scalar(255,255,255), 3);
+  }
+
+
+
   // visualization representive line [W]
   line(src, Point(inv_convert_x(upper_x),inv_convert_y(top_y)), Point(inv_convert_x(lower_x),inv_convert_y(0)),Scalar(0,0,255), 3);
 
   // visualization camera's origin(on converted coordinate) [JH]
   circle(src, Point(597,720), 10, Scalar(255,0,0), 5);
+
+  // visualization rotation Circle
+  circle(src, Point(inv_convert_x(lower_x - top_y),inv_convert_y(0)),top_y,Scalar(0,255,0),5);
 
   // save image [JH]
   imwrite("mask.png", mask);  
