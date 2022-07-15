@@ -84,6 +84,10 @@ int main()
 
   // 2-D vector for way points [W]
   vector<pair<int, int>> wp_xy;
+
+  // x, y positions [W]
+  float x_pos;
+  float y_pos;
   // -------------------------------------------
 
   // Red_HSV_range (based on dataset)
@@ -178,11 +182,15 @@ int main()
     wp_xy.push_back(make_pair(wp_x[i], wp_y[i]));
   }
 
-  // need to modify [W]
+  // print x,y position of way points [W]
   for(int i = 0; i < wp_xy.size(); i++)
   {
-    cout <<"way point" << i + 1<< "'s x value : " <<wp_xy[i].first*distance_of_pixel << "cm, way point"<< i + 1 << "'s y value: " << wp_xy[i].second*distance_of_pixel<< "cm" <<endl;
+    x_pos = wp_xy[i].first*distance_of_pixel;
+    y_pos =  wp_xy[i].second*distance_of_pixel;
+    cout <<"way point" << i + 1<< "'s x value : " << x_pos << "cm, way point"
+    << i + 1 << "'s y value: " << y_pos<< "cm" <<endl;
   }
+
   for(int i=0; i<10; i++)
   {
     circle(src, Point(inv_convert_x(wp_x[i]), inv_convert_y(wp_y[i])), 5, Scalar(255,255,255), 3);
