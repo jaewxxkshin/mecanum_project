@@ -133,6 +133,7 @@ add_executable(line_detection_image src/line_detection_image.cpp)
 add_executable(test_jh src/test.cpp)
 add_executable(copy_test src/copy_test.cpp)
 add_executable(jaewxxk_test src/jaewxxk_test.cpp)
+add_executable(fitLine_corner src/fitLine_corner.cpp)
 
 #add_executable(camera_jh src/camera_jw.cpp)
 target_link_libraries(camera_jh ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${realsense2_LIBRARY})
@@ -141,7 +142,7 @@ target_link_libraries(line_detection_image ${catkin_LIBRARIES} ${OpenCV_LIBRARIE
 target_link_libraries(test_jh ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(copy_test ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(jaewxxk_test ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-
+target_link_libraries(fitLine_corner ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

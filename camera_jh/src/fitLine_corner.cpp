@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <math.h>
+#include <numeric>
 
 // constant value[JH]
 #define left_width 310
@@ -14,7 +15,7 @@
 #define distance_of_pixel 0.075  //cm
 #define pixels 72
 #define PI 3.141592
-
+#define corner_threshold 700
 using namespace cv;
 using namespace std;
 
@@ -70,17 +71,18 @@ int main()
   Vec4f detected_line;
 
   // vector that contains all of contours's y value [W]
-  vector<int> y_val;
+  vector<int> y_val, x_val;
 
   // vector that contains waypoint's position [W]
   vector<int> wp_y;
   vector<int> wp_x;
   vector<int> wp_y_c;
   vector<int> wp_x_c;
+  vector<int> bottom_x;
 
   // variation after applying fitLine() function [W]
   float vx, vy;
-  int upper_x, lower_x, top_y, x, y, converted_x, converted_y;
+  int upper_x, lower_x, top_y, x, y, converted_x, converted_y, right_x, left_x;
 
   // 2-D vector for way points [W]
   vector<pair<int, int>> wp_xy;
@@ -103,7 +105,7 @@ int main()
   
 
   // read image [JH]
-  src = imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image_line.png");  
+  src = imread("/home/mrl/catkin_ws/src/mecanum_project/camera_jh/src/Image_line_right.png");  
 
   // BGR -> HSV [HW]
   cvtColor(src,hsv,COLOR_BGR2HSV); 
@@ -123,6 +125,7 @@ int main()
     inRange(hsv, lower_blue, upper_blue, mask);  
     bitwise_and(src, src, image, mask);
   }
+
   //========================================================================
 
   // classical edge detection [W]
@@ -145,11 +148,33 @@ int main()
       y_val.push_back(contours[i][j].y);
     }
   }
+  for ( int i = 0; i < contours.size(); i++)
+  {
+    for ( int j = 0; j < contours[i].size(); j++)
+    {
+      x_val.push_back(contours[i][j].x);
+    }
+  }
+
   int min = *min_element(y_val.begin(),y_val.end()); 
+  int max = *max_element(y_val.begin(),y_val.end()); 
+  int x_left = *min_element(x_val.begin(),x_val.end());
+  int x_right = *max_element(x_val.begin(),x_val.end());
   //========================================================================
+  for ( int i = 0; i < contours.size(); i++)
+  {
+    for ( int j = 0; j < contours[i].size(); j++)
+    {
+      if(contours[i][j].y==max)
+      {
+      bottom_x.push_back(contours[i][j].x);
+      }
+    }
+  }
+  int sum_bottom_x = accumulate(bottom_x.begin(),bottom_x.end(),0);
+  int mean_bottom_x = sum_bottom_x/bottom_x.size();
 
   // if system detect more than 2 contours -> connect every contours [JH]
-  
   for (int i=0; i < contours.size(); i++)
   {
     for (int j=0; j < contours[i].size() ; j++)
@@ -157,20 +182,23 @@ int main()
       contours_sum.push_back(contours[i][j]);
     }
   }
-
-
-
+  
   // fitLine() function to detect representive line [W]
   fitLine(contours_sum, detected_line, CV_DIST_L2, 0, 0.01, 0.01);
   vx = detected_line[0];
   vy = detected_line[1];
   x = int(detected_line[2]);
   y = int(detected_line[3]);
+  
+  // visualization representive line [W]
+//   line(src, Point(inv_convert_x(upper_x),inv_convert_y(top_y)), Point(inv_convert_x(lower_x),inv_convert_y(0)),Scalar(0,0,255), 3);
 
   // get (x,y) of detected line in converted coordinate [JH]
   converted_x = convert_x(x);
   converted_y = convert_y(y);
   top_y = convert_y(min);
+  left_x = convert_x(x_left);
+  right_x = convert_x(x_right);
   // cout << "vx : " << vx << "vy : " << vy <<endl;
 
   upper_x = int(vx/vy*(top_y-converted_y)+converted_x);
@@ -179,75 +207,83 @@ int main()
   // cout << "lower point : " << lower_x << "," << "0" << endl;
 
   // waypoint visualization [W]
-  for(int i=0; i<10; i++)
+  if(top_y > corner_threshold) // go straight
   {
-    wp_y.push_back(top_y/10*(i+1));
-    wp_x.push_back((vx/vy*(wp_y[i]-converted_y)+converted_x));
-    // use make_pair [W]
-    wp_xy.push_back(make_pair(wp_x[i], wp_y[i]));
+    for(int i=0; i<10; i++)
+    {
+      wp_y.push_back(top_y/10*(i+1));
+      wp_x.push_back((vx/vy*(wp_y[i]-converted_y)+converted_x));
+      // use make_pair [W]
+      wp_xy.push_back(make_pair(wp_x[i], wp_y[i]));
+    }
   }
-
-  // print x,y position of way points [W]
-  for(int i = 0; i < wp_xy.size(); i++)
+  else if(top_y<corner_threshold) // turn right / left
   {
-    x_pos = wp_xy[i].first*distance_of_pixel;
-    y_pos =  wp_xy[i].second*distance_of_pixel;
-    cout <<"way point" << i + 1<< "'s x value : " << x_pos << "cm, way point"
-    << i + 1 << "'s y value: " << y_pos<< "cm" <<endl;
+    for(int i=0; i<10; i++) // circle waypoint y
+    {
+      float theta = (i+1) * 10 * PI / 180;
+      wp_y.push_back(top_y * sin(theta));
+      // cout << top_y << " " << theta << endl;
+      // cout << wp_y[i] << endl;
+    }
+    if (vy/vx > 0) // turn left - waypoint x
+    {
+        for(int i=0; i<10; i++)
+      {
+        float theta = (i+1)*10 * PI / 180;
+        wp_x.push_back(convert_x(mean_bottom_x)- top_y + top_y * cos(theta));
+        // wp_x_c.push_back(lower_x - top_y * cos(theta));
+        // cout << wp_x[i] << endl;
+      }
+    } 
+    else if (vy/vx<0) // turn right - waypoint x
+    {
+        for(int i=0; i<10; i++)
+      {
+        float theta = (i+1)*10 * PI / 180;
+        wp_x.push_back(convert_x(mean_bottom_x) + top_y - top_y * cos(theta));
+        // wp_x_c.push_back(lower_x - top_y * cos(theta));
+        // cout << wp_x[i] << endl;
+      }
+    }
   }
-
-  for(int i=0; i<10; i++)
+    for(int i=0; i<10; i++)
   {
     circle(src, Point(inv_convert_x(wp_x[i]), inv_convert_y(wp_y[i])), 5, Scalar(255,255,255), 3);
   }
 
   // 2022/07/15 temporay comment [W]
   // waypoint visualization on corner [HW]
-  for(int i=0; i<10; i++)
-  {
-    float theta = (i+1) * 10 * PI / 180;
-    wp_y_c.push_back(top_y * sin(theta));
-    cout << top_y << " " << theta << endl;
-    cout << wp_y_c[i] << endl;
-  }
-  for(int i=0; i<10; i++)
-  {
-    float theta = (i+1)*10 * PI / 180;
-    wp_x_c.push_back(lower_x - top_y + top_y * cos(theta));
-    // wp_x_c.push_back(lower_x - top_y * cos(theta));
-    cout << wp_x_c[i] << endl;
-  }
+  
 
-  for(int i=0; i<10; i++)
+  // print x,y position of way points [W]
+  for(int i = 0; i < wp_xy.size(); i++)
   {
-    circle(src, Point(inv_convert_x(wp_x_c[i]), inv_convert_y(wp_y_c[i])), 5, Scalar(255,255,255), 3);
+    x_pos = wp_xy[i].first*distance_of_pixel;
+    y_pos =  wp_xy[i].second*distance_of_pixel;
+    // cout <<"way point" << i + 1<< "'s x value : " << x_pos << "cm, way point"
+    // << i + 1 << "'s y value: " << y_pos<< "cm" <<endl;
   }
 
 
 
-  // visualization representive line [W]
-  line(src, Point(inv_convert_x(upper_x),inv_convert_y(top_y)), Point(inv_convert_x(lower_x),inv_convert_y(0)),Scalar(0,0,255), 3);
+//   for(int i=0; i<10; i++)
+//   {
+//     circle(src, Point(inv_convert_x(wp_x_c[i]), inv_convert_y(wp_y_c[i])), 5, Scalar(255,255,255), 3);
+//   }
 
   // visualization camera's origin(on converted coordinate) [JH]
   circle(src, Point(597,720), 10, Scalar(255,0,0), 5);
 
   // 2022/07/15 temporay comment [W]
   // visualization rotation Circle[HW]
-  circle(src, Point(inv_convert_x(lower_x - top_y),inv_convert_y(0)),top_y,Scalar(0,255,0),5);
+
+//   circle(src, Point(inv_convert_x(lower_x - top_y),inv_convert_y(0)),top_y,Scalar(0,255,0),5);
 
   // save image [JH]
-  
-  imwrite("contours.png", image);
-  imwrite("result.png",src);  
-  imwrite("mask.png", mask);  
-  
-  // Harris corener detect[W]
-  Mat harris_c;
-	Mat harris_norm;
-	Mat cs_abs;
-
-
-
+  imwrite("mask.png_jh", mask);  
+  imwrite("contours_jh.png", image);
+  imwrite("result_jh.png",src);  
 
   return 0;
 }
