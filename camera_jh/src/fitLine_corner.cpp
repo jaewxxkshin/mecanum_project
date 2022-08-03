@@ -4,7 +4,6 @@
 #include <opencv2/imgproc.hpp>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 #include <math.h>
 #include <numeric>
 
@@ -189,9 +188,6 @@ int main()
   vy = detected_line[1];
   x = int(detected_line[2]);
   y = int(detected_line[3]);
-  
-  // visualization representive line [W]
-//   line(src, Point(inv_convert_x(upper_x),inv_convert_y(top_y)), Point(inv_convert_x(lower_x),inv_convert_y(0)),Scalar(0,0,255), 3);
 
   // get (x,y) of detected line in converted coordinate [JH]
   converted_x = convert_x(x);
@@ -203,6 +199,10 @@ int main()
 
   upper_x = int(vx/vy*(top_y-converted_y)+converted_x);
   lower_x = int(vx/vy*(-1*converted_y) + converted_x);
+
+    // visualization representive line [W]
+  line(image, Point(inv_convert_x(upper_x),inv_convert_y(top_y)), Point(inv_convert_x(lower_x),inv_convert_y(0)),Scalar(0,0,255), 3);
+
   // cout << "upper point : " << upper_x << "," << top_y << endl;
   // cout << "lower point : " << lower_x << "," << "0" << endl;
 
@@ -214,7 +214,7 @@ int main()
       wp_y.push_back(top_y/10*(i+1));
       wp_x.push_back((vx/vy*(wp_y[i]-converted_y)+converted_x));
       // use make_pair [W]
-      wp_xy.push_back(make_pair(wp_x[i], wp_y[i]));
+      // wp_xy.push_back(make_pair(wp_x[i], wp_y[i]));
     }
   }
   else if(top_y<corner_threshold) // turn right / left
@@ -247,10 +247,16 @@ int main()
       }
     }
   }
+
     for(int i=0; i<10; i++)
-  {
+    {
+      wp_xy.push_back(make_pair(wp_x[i], wp_y[i]));
+    }
+
+    for(int i=0; i<10; i++)
+    {
     circle(src, Point(inv_convert_x(wp_x[i]), inv_convert_y(wp_y[i])), 5, Scalar(255,255,255), 3);
-  }
+    }
 
   // 2022/07/15 temporay comment [W]
   // waypoint visualization on corner [HW]
@@ -259,10 +265,11 @@ int main()
   // print x,y position of way points [W]
   for(int i = 0; i < wp_xy.size(); i++)
   {
-    x_pos = wp_xy[i].first*distance_of_pixel;
-    y_pos =  wp_xy[i].second*distance_of_pixel;
-    // cout <<"way point" << i + 1<< "'s x value : " << x_pos << "cm, way point"
-    // << i + 1 << "'s y value: " << y_pos<< "cm" <<endl;
+    x_pos = wp_xy[i].first*distance_of_pixel*0.01; // m
+    y_pos =  wp_xy[i].second*distance_of_pixel*0.01; //m
+    cout <<"way point" << i + 1<< "'s x value : " << x_pos << "m, way point"
+    << i + 1 << "'s y value: " << y_pos<< "m" <<endl;
+    
   }
 
 
@@ -281,8 +288,8 @@ int main()
 //   circle(src, Point(inv_convert_x(lower_x - top_y),inv_convert_y(0)),top_y,Scalar(0,255,0),5);
 
   // save image [JH]
-  imwrite("mask.png_jh", mask);  
-  imwrite("contours_jh.png", image);
+  imwrite("mask_hw.png", mask);  
+  imwrite("contours_hw.png", image);
   imwrite("result_jh.png",src);  
 
   return 0;

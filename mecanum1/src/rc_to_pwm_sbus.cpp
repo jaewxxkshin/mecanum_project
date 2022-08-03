@@ -21,12 +21,14 @@ std_msgs::Float32MultiArray checkarr;
 std_msgs::Float32MultiArray sys_vel_arr;
 std_msgs::Float32MultiArray motor_vel2;
 std_msgs::Float32MultiArray des_R;
+std_msgs::Float32MultiArray val_psi;
 //====================================================
 
 //[W]function header========================================
 void set_array();
 void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub);
 void velocityCallback(const std_msgs::Float32MultiArray::ConstPtr& moniter_vel);
+void psiCallback(const std_msgs::Float32MultiArray::ConstPtr& arr);
 int sgn(double v);
 //====================================================
 
@@ -43,6 +45,7 @@ int main(int argc, char** argv)
 	ros::Publisher des_rad = nh.advertise<std_msgs::Float32MultiArray>("des_rad", 1000);
 	ros::Subscriber rc_to_pwm = nh.subscribe("RC_readings", 1000, &PWMsCallback);
 	ros::Subscriber pulse_to_vel = nh.subscribe("wheel_vel", 1000, &velocityCallback);
+	ros::Subscriber get_psi = nh.subscribe("pub_psi", 100, &psiCallback);
 	
 	// [W] change from 10 to 100 then set baudrate
 	ros::Rate loop_rate(100);
@@ -94,19 +97,20 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub)
 		//[W] to increase resolving power change int to float			
 		// rc_input.data[2] : R
 		// rc_input.data[1] : v_m
-		float new_rc = rc_input.data[2];		
-		float R = 1 / (tan(new_rc / 255 * M_PI / 2));	
+		// float new_rc = rc_input.data[2];		
+		
 		//[J] If response characteristics of R via tangent function-based mapping is not satisfying, then
 		//1. Change the weight (current:1 , changed:10,100,.1,.01 etc..)
 		//2. Change the mapping function that is not tangent
+			
+		float v2 = rc_input.data[1];
+		float L = 0.43;
+		float theta = -val_psi.data[0];
+		float R = L/tan(theta);	
 		float R_minimum = 0.1;	
 		if (abs(R) < R_minimum) R = sgn(R) * R_minimum;
 		//[W] modified
 		des_R.data[0] = 1/R;
-			
-		float v2 = rc_input.data[1];
-		float L = 0.43;
-		float theta = atan(L/R);
 		float vx = v2 * sin(theta);
 		float vy = v2 * cos(theta);
 		float w = vy / R;
@@ -147,6 +151,11 @@ void velocityCallback(const std_msgs::Float32MultiArray::ConstPtr& moniter_vel)
 	}
 }
 
+void psiCallback(const std_msgs::Float32MultiArray::ConstPtr& arr) 
+{
+	val_psi.data[0]= arr->data[0];
+}
+
 void set_array()
 {
 	rc_input.data.resize(4);
@@ -156,6 +165,7 @@ void set_array()
 	sys_vel_arr.data.resize(4);
 	motor_vel2.data.resize(4);
 	des_R.data.resize(1);
+	val_psi.data.resize(1);
 }
 
 
