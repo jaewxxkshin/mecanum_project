@@ -12,6 +12,7 @@
 #define pwm_threshold  220
 #define vel_threshold  0.7
 #define switch_threshold 1000
+#define r_gain 0.1
 
 //[W]For ROS =======================================
 std_msgs::Int16MultiArray rc_input;
@@ -105,12 +106,13 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub)
 			
 		float v2 = rc_input.data[1];
 		float L = 0.43;
-		float theta = -val_psi.data[0];
-		float R = L/tan(theta);	
+		float theta = val_psi.data[0];
+		float R = - L/tan(theta); 	
 		float R_minimum = 0.1;	
 		if (abs(R) < R_minimum) R = sgn(R) * R_minimum;
+		ROS_INFO("R: %f", R);
 		//[W] modified
-		des_R.data[0] = 1/R;
+		des_R.data[0] = 1/R * r_gain; // r_gain need to change
 		float vx = v2 * sin(theta);
 		float vy = v2 * cos(theta);
 		float w = vy / R;
