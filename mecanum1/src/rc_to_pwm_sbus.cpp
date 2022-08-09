@@ -12,7 +12,9 @@
 #define pwm_threshold  220
 #define vel_threshold  0.7
 #define switch_threshold 1000
-#define gain 1 // need to change
+
+
+#define gain 1// need to change
 
 //[W]For ROS =======================================
 std_msgs::Int16MultiArray rc_input;
