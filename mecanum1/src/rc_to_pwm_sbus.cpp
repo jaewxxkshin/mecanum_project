@@ -79,7 +79,7 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub)
 
 	}
 	//[W] each channels's values
-	ROS_INFO(" 1:[%d] 2:[%d] 3:[%d] 4:[%d]", rc_input.data[0], rc_input.data[1], rc_input.data[2], rc_input.data[3]);
+	//ROS_INFO(" 1:[%d] 2:[%d] 3:[%d] 4:[%d]", rc_input.data[0], rc_input.data[1], rc_input.data[2], rc_input.data[3]);
 	
 
 		
@@ -106,18 +106,31 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub)
 		//1. Change the weight (current:1 , changed:10,100,.1,.01 etc..)
 		//2. Change the mapping function that is not tangent
 			
-		float v2 = rc_input.data[1];
-		float L = 0.43;
-		float theta = val_psi.data[0];
-		float R = -gain * L/tan(theta);	
+		float psi_sub = -val_psi.data[0];
+		int like_pwm = int(512* psi_sub);
+		std::cout << "pwm : " << like_pwm <<std::endl;
+		if (like_pwm >= 255)
+		{
+			like_pwm = 255;
+		}
+		else if(like_pwm <=-255)
+		{
+			like_pwm = -255;
+		}
+		//float R = -gain * L/tan(theta);
+		float R = 1 / (tan(like_pwm / 255 * M_PI / 2));		
 		float R_minimum = 0.1;	
 		if (abs(R) < R_minimum) R = sgn(R) * R_minimum;
 		//[W] modified
 		des_R.data[0] = 1/R;
+		// std::cout << "1/R : " << 1/R << std::endl;
+			
+		float v2 = rc_input.data[1];
+		float L = 0.43;
+		float theta = atan(L/R);
 		float vx = v2 * sin(theta);
 		float vy = v2 * cos(theta);
-		float w = vy / R;
-		if(abs(w) > 255) w=sgn(w)*255; 	
+		float w = vy / R;	
 
 		//[W] just check 		
 		checkarr.data[0]=R;
