@@ -4,7 +4,7 @@
 <node name="rc_to_pwm_sbus" pkg="mecanum1" type="rc_to_pwm_sbus" output="screen"/>
 
 <!-- Rosbag -->
-<node pkg="rosbag" type="record" name="record" output="screen" args="-o /home/mrl/catkin_ws/src/rosbag/ /wp_r_x /wp_r_y /des_rad /pub_psi /atan2_pub /cam_att_2_pub" />
+<node pkg="rosbag" type="record" name="record" output="screen" args="-o /home/mrl/catkin_ws/src/rosbag/ /wp_r_x /wp_r_y /des_rad /pub_psi" />
 
 </launch>
 

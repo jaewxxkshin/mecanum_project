@@ -108,12 +108,12 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub)
 			
 		float psi_sub = -val_psi.data[0];
 
-		float like_pwm = 512* psi_sub;
+		float like_pwm =  psi_sub;
 		std::cout << "pwm : " << like_pwm <<std::endl;
 		if (like_pwm >= 255)
 		{
 			like_pwm = 255;
-		}
+		} 
 		else if(like_pwm <=-255)
 		{
 			like_pwm = -255;
