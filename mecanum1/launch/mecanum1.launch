@@ -2,9 +2,10 @@
 
 <node name="serial_node" pkg="rosserial_python"  type="serial_node.py" args="/dev/adk"/>
 <node name="rc_to_pwm_sbus" pkg="mecanum1" type="rc_to_pwm_sbus" output="screen"/>
+<node name="visualization_wp_marker" pkg="visualization_marker_tutorials" type="points_and_lines" output="screen"/>
 
 <!-- Rosbag -->
-<node pkg="rosbag" type="record" name="record" output="screen" args="-o /home/mrl/catkin_ws/src/rosbag/ /wp_r_x /wp_r_y /des_rad /ros_bag /check_idx " />
-
+<!-- <node pkg="rosbag" type="record" name="record" output="screen" args="-o /home/mrl/catkin_ws/src/rosbag/ /wp_r_x /wp_r_y /des_rad /ros_bag /check_idx /visualization_marker " />-->
+<node pkg="rosbag" type="record" name="record" output="screen" args="-o /home/mrl/catkin_ws/src/rosbag/ -a"/>
 </launch>
 

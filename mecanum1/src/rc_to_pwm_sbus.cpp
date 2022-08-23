@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	ros::Publisher des_rad = nh.advertise<std_msgs::Float32MultiArray>("des_rad", 1000);
 	ros::Subscriber rc_to_pwm = nh.subscribe("RC_readings", 1000, &PWMsCallback);
 	ros::Subscriber pulse_to_vel = nh.subscribe("wheel_vel", 1000, &velocityCallback);
-	ros::Subscriber get_psi = nh.subscribe("ros_bag", 100, &psiCallback);
+	ros::Subscriber get_psi = nh.subscribe("pub_psi", 100, &psiCallback);
 	
 	// [W] change from 10 to 100 then set baudrate
 	ros::Rate loop_rate(100);
@@ -110,15 +110,22 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub)
 
 		float like_pwm =  psi_sub;
 		std::cout << "pwm : " << like_pwm <<std::endl;
-		
+		if (like_pwm >= 255)
+		{
+			like_pwm = 255;
+		} 
+		else if(like_pwm <=-255)
+		{
+			like_pwm = -255;
+		}
 		//float R = -gain * L/tan(theta);
 		float R = 1 / (tan(like_pwm / 255 * M_PI / 2));		
 		float R_minimum = 0.1;	
 		if (abs(R) < R_minimum) R = sgn(R) * R_minimum;
-		//std::cout<<"R : " << R <<std::endl;
+		std::cout<<"R : " << R <<std::endl;
 		//[W] modified
 		des_R.data[0] = 1/R;
-		//std::cout << "1/R : " << 1/R << std::endl;
+		std::cout << "1/R : " << 1/R << std::endl;
 			
 		float v2 = rc_input.data[1];
 		float L = 0.43;
@@ -164,8 +171,7 @@ void velocityCallback(const std_msgs::Float32MultiArray::ConstPtr& moniter_vel)
 
 void psiCallback(const std_msgs::Float32MultiArray::ConstPtr& arr) 
 {
-	val_psi.data[0]= arr->data[4];
-	//std::cout << val_psi.data[0] << std::endl;
+	val_psi.data[0]= arr->data[0];
 }
 
 void set_array()
