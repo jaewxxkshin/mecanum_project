@@ -127,7 +127,8 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub)
 		des_R.data[0] = 1/R;
 		std::cout << "1/R : " << 1/R << std::endl;
 			
-		float v2 = rc_input.data[1];
+		// float v2 = rc_input.data[1];
+		float v2 = 100;
 		float L = 0.43;
 		float theta = atan(L/R);
 		float vx = v2 * sin(theta);
