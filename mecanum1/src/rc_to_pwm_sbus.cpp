@@ -129,7 +129,8 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub)
 			
 		// float v2 = rc_input.data[1];
 		float v2 = 100;
-		float L = 0.43;
+		// version 1's L value = 0.43m -> version 2's L value = 0.54m 
+		float L = 0.54;
 		float theta = atan(L/R);
 		float vx = v2 * sin(theta);
 		float vy = v2 * cos(theta);
