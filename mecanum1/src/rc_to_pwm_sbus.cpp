@@ -7,6 +7,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Int16MultiArray.h>
 #include <std_msgs/Float32MultiArray.h>
+#include <std_msgs/Int16.h>
 
 //[W]need to scaling max_velwheel_vel
 #define pwm_threshold  220
@@ -16,6 +17,8 @@
 
 #define gain 1// need to change
 
+int idx = 0;
+float v2 = 0.0;
 //[W]For ROS =======================================
 std_msgs::Int16MultiArray rc_input;
 std_msgs::Float32MultiArray motor_vel;
@@ -32,6 +35,7 @@ void set_array();
 void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub);
 void velocityCallback(const std_msgs::Float32MultiArray::ConstPtr& moniter_vel);
 void psiCallback(const std_msgs::Float32MultiArray::ConstPtr& arr);
+void idxCallback(const std_msgs::Int16& msg);
 int sgn(double v);
 //====================================================
 
@@ -49,7 +53,8 @@ int main(int argc, char** argv)
 	ros::Subscriber rc_to_pwm = nh.subscribe("RC_readings", 1000, &PWMsCallback);
 	ros::Subscriber pulse_to_vel = nh.subscribe("wheel_vel", 1000, &velocityCallback);
 	ros::Subscriber get_psi = nh.subscribe("pub_psi", 100, &psiCallback);
-	
+	ros::Subscriber test = nh.subscribe("/pub_idx",100,idxCallback);
+
 	// [W] change from 10 to 100 then set baudrate
 	ros::Rate loop_rate(100);
 	
@@ -128,7 +133,11 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub)
 		std::cout << "1/R : " << 1/R << std::endl;
 			
 		// float v2 = rc_input.data[1];
-		float v2 = 100;
+		// float v2 = 100;
+		
+		if (idx >= 10) v2 = 0.;
+		else v2 = 100.;
+
 		// version 1's L value = 0.43m -> version 2's L value = 0.54m 
 		float L = 0.54;
 		float theta = atan(L/R);
@@ -173,7 +182,7 @@ void velocityCallback(const std_msgs::Float32MultiArray::ConstPtr& moniter_vel)
 
 void psiCallback(const std_msgs::Float32MultiArray::ConstPtr& arr) 
 {
-	val_psi.data[0]= arr->data[0];
+	val_psi.data[0]= arr->data[4];
 }
 
 void set_array()
@@ -193,4 +202,9 @@ int sgn(double v)
 {
 	if (v < 0) return -1;
 	if (v >= 0) return 1;
+}
+
+void idxCallback(const std_msgs::Int16& msg)
+{
+    idx = msg.data;
 }
