@@ -8,6 +8,7 @@
 #include <std_msgs/Int16MultiArray.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Int16.h>
+#include <std_msgs/Bool.h>
 
 //[W]need to scaling max_velwheel_vel
 #define pwm_threshold  220
@@ -19,6 +20,8 @@
 
 int idx = 0;
 float v2 = 0.0;
+bool finish_flag = false;
+
 //[W]For ROS =======================================
 std_msgs::Int16MultiArray rc_input;
 std_msgs::Float32MultiArray motor_vel;
@@ -36,6 +39,7 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub);
 void velocityCallback(const std_msgs::Float32MultiArray::ConstPtr& moniter_vel);
 void psiCallback(const std_msgs::Float32MultiArray::ConstPtr& arr);
 void idxCallback(const std_msgs::Int16& msg);
+void finish_decision_Callback(const std_msgs::Bool::ConstPtr& decision);
 int sgn(double v);
 //====================================================
 
@@ -54,7 +58,8 @@ int main(int argc, char** argv)
 	ros::Subscriber pulse_to_vel = nh.subscribe("wheel_vel", 1000, &velocityCallback);
 	ros::Subscriber get_psi = nh.subscribe("pub_psi", 100, &psiCallback);
 	ros::Subscriber test = nh.subscribe("/pub_idx",100,idxCallback);
-
+	ros::Subscriber finish_decision_sub=nh.subscribe("/finish_decision",100,finish_decision_Callback);
+	
 	// [W] change from 10 to 100 then set baudrate
 	ros::Rate loop_rate(100);
 	
@@ -136,8 +141,10 @@ void PWMsCallback(const std_msgs::Int16MultiArray::ConstPtr& rc_sub)
 		// float v2 = 100;
 		
 		if (idx >= 10) v2 = 0.;
-		else v2 = 100.;
+		else if ( finish_flag== true &&idx>=9) v2 = 0.;
+		else v2 = 150.;
 
+		
 		// version 1's L value = 0.43m -> version 2's L value = 0.54m 
 		float L = 0.54;
 		float theta = atan(L/R);
@@ -207,4 +214,9 @@ int sgn(double v)
 void idxCallback(const std_msgs::Int16& msg)
 {
     idx = msg.data;
+}
+
+void finish_decision_Callback(const std_msgs::Bool::ConstPtr& decision)
+{
+	finish_flag = decision->data;
 }
